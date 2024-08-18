@@ -17,6 +17,7 @@ add_public_tablegen_target(V810CommonTableGen)
 add_llvm_target(V810CodeGen
   V810AsmPrinter.cpp
   V810BranchSelector.cpp
+  V810CallingConv.cpp
   V810FrameLowering.cpp
   V810InstrInfo.cpp
   V810ISelDAGToDAG.cpp
@@ -29,6 +30,7 @@ add_llvm_target(V810CodeGen
   V810TargetMachine.cpp
   V810TargetObjectFile.cpp
   V810TargetTransformInfo.cpp
+  GISel/V810CallLowering.cpp
 
   LINK_COMPONENTS
   AsmPrinter

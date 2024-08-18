@@ -5,6 +5,7 @@
 #include "V810InstrInfo.h"
 #include "V810ISelLowering.h"
 #include "V810SelectionDAGInfo.h"
+#include "llvm/CodeGen/GlobalISel/CallLowering.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 
@@ -25,6 +26,8 @@ private:
   V810SelectionDAGInfo TSInfo;
   V810FrameLowering FrameLowering;
   InstrItineraryData InstrItins;
+
+  std::unique_ptr<CallLowering> CallLoweringInfo;
 public:
   V810Subtarget(const Triple &TT, const std::string &CPU,
                 const std::string &FS, const TargetMachine &TM);
@@ -45,6 +48,8 @@ public:
   const V810SelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
+
+  const CallLowering *getCallLowering() const override;
 
   bool isNintendo() const { return IsNintendo; }
 

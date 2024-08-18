@@ -1,4 +1,5 @@
 #include "V810Subtarget.h"
+#include "GISel/V810CallLowering.h"
 #include "V810.h"
 
 using namespace llvm;
@@ -32,4 +33,10 @@ V810Subtarget::V810Subtarget(const Triple &TT, const std::string &CPU,
                              const std::string &FS, const TargetMachine &TM)
     : V810GenSubtargetInfo(TT, CPU, /*TuneCPU*/ CPU, FS),
       InstrInfo(), TLInfo(TM, initializeSubtargetDependencies(TT, CPU, FS)), FrameLowering(),
-      InstrItins(getInstrItineraryForCPU(getCPUName(TT, CPU))) {}
+      InstrItins(getInstrItineraryForCPU(getCPUName(TT, CPU))) {
+  CallLoweringInfo.reset(new V810CallLowering(*getTargetLowering()));
+}
+
+const CallLowering *V810Subtarget::getCallLowering() const {
+  return CallLoweringInfo.get();
+}

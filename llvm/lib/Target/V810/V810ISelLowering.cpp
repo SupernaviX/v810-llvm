@@ -2,6 +2,7 @@
 #include "V810.h"
 #include "V810MachineFunctionInfo.h"
 #include "MCTargetDesc/V810MCExpr.h"
+#include "V810CallingConv.h"
 #include "V810RegisterInfo.h"
 #include "V810Subtarget.h"
 #include "V810TargetObjectFile.h"
@@ -14,22 +15,6 @@
 #include "llvm/Support/KnownBits.h"
 
 using namespace llvm;
-
-namespace {
-  class V810CCState : public CCState {
-    unsigned NumFixedParams = 0;
-
-  public:
-    V810CCState(CallingConv::ID CC, bool IsVarArg, MachineFunction &MF,
-                SmallVectorImpl<CCValAssign> &locs, LLVMContext &C,
-                unsigned NumFixedParams)
-        : CCState(CC, IsVarArg, MF, locs, C),
-          NumFixedParams(NumFixedParams) {}
-    unsigned getNumFixedParams() const { return NumFixedParams; }
-  };
-}
-
-#include "V810GenCallingConv.inc"
 
 V810TargetLowering::V810TargetLowering(const TargetMachine &TM,
                                        const V810Subtarget &STI)

@@ -10,6 +10,17 @@
 
 using namespace llvm;
 
+static Register getStackAddressImpl(MachineIRBuilder &MIRBuilder,uint64_t Size, int64_t Offset,
+                                    MachinePointerInfo &MPO, ISD::ArgFlagsTy Flags) {
+  MachineFunction &MF = MIRBuilder.getMF();
+  const bool IsImmutable = !Flags.isByVal();
+  int FI = MF.getFrameInfo().CreateFixedObject(Size, Offset, IsImmutable);
+  MPO = MachinePointerInfo::getFixedStack(MF, FI);
+
+  LLT FramePtr = LLT::pointer(0, MF.getDataLayout().getPointerSizeInBits());
+  MachineInstrBuilder AddrReg = MIRBuilder.buildFrameIndex(FramePtr, FI);
+  return AddrReg.getReg(0);  
+}
 namespace {
 struct OutgoingArgHandler : public CallLowering::OutgoingValueHandler {
   OutgoingArgHandler(MachineIRBuilder &MIRBuilder, MachineRegisterInfo &MRI,
@@ -40,13 +51,46 @@ void OutgoingArgHandler::assignValueToAddress(Register ValVReg, Register Addr,
                                               LLT MemTy,
                                               const MachinePointerInfo &MPO,
                                               const CCValAssign &VA) {
-  llvm_unreachable("unimplemented");
+    MachineFunction &MF = MIRBuilder.getMF();
+    auto MMO = MF.getMachineMemOperand(MPO, MachineMemOperand::MOStore, MemTy,
+                                       inferAlignFromPtrInfo(MF, MPO));
+    MIRBuilder.buildStore(ValVReg, Addr, *MMO);
 }
 
 Register OutgoingArgHandler::getStackAddress(uint64_t Size, int64_t Offset,
                                              MachinePointerInfo &MPO,
                                              ISD::ArgFlagsTy Flags) {
-  llvm_unreachable("unimplemented");
+  return getStackAddressImpl(MIRBuilder, Size, Offset, MPO, Flags);
+}
+
+void V810IncomingValueHandler::assignValueToReg(Register ValVReg,
+                                        Register PhysReg,
+                                        const CCValAssign &VA) {
+  markPhysRegUsed(PhysReg);
+  IncomingValueHandler::assignValueToReg(ValVReg, PhysReg, VA);
+}
+
+void V810IncomingValueHandler::assignValueToAddress(
+    Register ValVReg, Register Addr, LLT MemTy, const MachinePointerInfo &MPO,
+    const CCValAssign &VA) {
+  MachineFunction &MF = MIRBuilder.getMF();
+  auto *MMO = MF.getMachineMemOperand(MPO, MachineMemOperand::MOLoad, MemTy,
+                                      inferAlignFromPtrInfo(MF, MPO));
+  MIRBuilder.buildLoad(ValVReg, Addr, *MMO);
+}
+
+Register V810IncomingValueHandler::getStackAddress(
+    uint64_t Size, int64_t Offset,
+    MachinePointerInfo &MPO, ISD::ArgFlagsTy Flags) {
+  return getStackAddressImpl(MIRBuilder, Size, Offset, MPO, Flags);
+}
+
+void FormalArgHandler::markPhysRegUsed(unsigned PhysReg) {
+  MIRBuilder.getMBB().addLiveIn(PhysReg);
+}
+
+void CallReturnHandler::markPhysRegUsed(unsigned PhysReg) {
+  MIB.addDef(PhysReg, RegState::Implicit);
 }
 
 V810CallLowering::V810CallLowering(const V810TargetLowering &TLI)
@@ -57,8 +101,8 @@ bool V810CallLowering::canLowerReturn(MachineFunction &MF,
                                       SmallVectorImpl<BaseArgInfo> &Outs,
                                       bool IsVarArg) const {
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs,
-                     MF.getFunction().getContext());
+  V810CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, MF.getFunction().getContext(),
+                     MF.getFunction().getFunctionType()->getNumParams());
   return checkReturn(CCInfo, Outs, RetCC_V810);
 }
 
@@ -85,9 +129,9 @@ bool V810CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
     splitToValueTypes(OrigArg, SplitArgs, DL, F.getCallingConv());
     OutgoingValueAssigner ArgAssigner(RetCC_V810);
     OutgoingArgHandler ArgHandler(MIRBuilder, MRI, MIB);
-    Success = determineAndHandleAssignments(ArgHandler, ArgAssigner, SplitArgs,
-                                            MIRBuilder, F.getCallingConv(),
-                                            F.isVarArg());
+    Success = doDetermineAndHandleAssignments(ArgHandler, ArgAssigner, SplitArgs,
+                                              MIRBuilder, F.getCallingConv(),
+                                              F.isVarArg(), F.getFunctionType()->getNumParams());
   }
   MIRBuilder.insertInstr(MIB);
   return Success;
@@ -116,9 +160,9 @@ bool V810CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
 
   IncomingValueAssigner ArgAssigner(CC_V810);
   FormalArgHandler ArgHandler(MIRBuilder, MRI);
-  return determineAndHandleAssignments(ArgHandler, ArgAssigner, SplitArgs,
+  return doDetermineAndHandleAssignments(ArgHandler, ArgAssigner, SplitArgs,
                                        MIRBuilder, F.getCallingConv(),
-                                       F.isVarArg());
+                                       F.isVarArg(), F.getFunctionType()->getNumParams());
 }
 
 bool V810CallLowering::isEligibleForTailCallOptimization(
@@ -153,13 +197,14 @@ bool V810CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   const DataLayout &DL = F.getDataLayout();
   const V810Subtarget &Subtarget =
       MIRBuilder.getMF().getSubtarget<V810Subtarget>();
+  unsigned NumParams = Info.CB ? Info.CB->getFunctionType()->getNumParams() : 0;
   
   SmallVector<ArgInfo, 8> OutArgs;
   for (auto &OrigArg : Info.OrigArgs)
     splitToValueTypes(OrigArg, OutArgs, DL, Info.CallConv);
 
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(Info.CallConv, Info.IsVarArg, MF, ArgLocs, F.getContext());
+  V810CCState CCInfo(Info.CallConv, Info.IsVarArg, MF, ArgLocs, F.getContext(), NumParams);
 
   OutgoingValueAssigner ArgAssigner(CC_V810);
   if (!determineAssignments(ArgAssigner, OutArgs, CCInfo))
@@ -223,10 +268,9 @@ bool V810CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
 
     IncomingValueAssigner RetAssigner(RetCC_V810);
     CallReturnHandler RetHandler(MIRBuilder, MRI, Call);
-    if (!determineAndHandleAssignments(RetHandler, RetAssigner, InArgs, MIRBuilder,
-                                       Info.CallConv, Info.IsVarArg))
+    if (!doDetermineAndHandleAssignments(RetHandler, RetAssigner, InArgs, MIRBuilder,
+                                        Info.CallConv, Info.IsVarArg, NumParams))
       return false;
-
   }
 
   // And then fix the stack
@@ -243,39 +287,17 @@ bool V810CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   return true;
 }
 
-void V810IncomingValueHandler::assignValueToReg(Register ValVReg,
-                                        Register PhysReg,
-                                        const CCValAssign &VA) {
-  markPhysRegUsed(PhysReg);
-  IncomingValueHandler::assignValueToReg(ValVReg, PhysReg, VA);
-}
-
-void V810IncomingValueHandler::assignValueToAddress(
-    Register ValVReg, Register Addr, LLT MemTy, const MachinePointerInfo &MPO,
-    const CCValAssign &VA) {
+bool V810CallLowering::doDetermineAndHandleAssignments(
+    ValueHandler &Handler, ValueAssigner &Assigner,
+    SmallVectorImpl<ArgInfo> &Args, MachineIRBuilder &MIRBuilder,
+    CallingConv::ID CallConv, bool IsVarArg, unsigned NumFixedParams) const {
   MachineFunction &MF = MIRBuilder.getMF();
-  auto *MMO = MF.getMachineMemOperand(MPO, MachineMemOperand::MOLoad, MemTy,
-                                      inferAlignFromPtrInfo(MF, MPO));
-  MIRBuilder.buildLoad(ValVReg, Addr, *MMO);
-}
+  const Function &F = MF.getFunction();
+  SmallVector<CCValAssign, 16> ArgLocs;
 
-Register V810IncomingValueHandler::getStackAddress(
-    uint64_t Size, int64_t Offset,
-    MachinePointerInfo &MPO, ISD::ArgFlagsTy Flags) {
-  MachineFunction &MF = MIRBuilder.getMF();
-  const bool IsImmutable = !Flags.isByVal();
-  int FI = MF.getFrameInfo().CreateFixedObject(Size, Offset, IsImmutable);
-  MPO = MachinePointerInfo::getFixedStack(MF, FI);
+  V810CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, F.getContext(), NumFixedParams);
+  if (!determineAssignments(Assigner, Args, CCInfo))
+    return false;
 
-  LLT FramePtr = LLT::pointer(0, MF.getDataLayout().getPointerSizeInBits());
-  MachineInstrBuilder AddrReg = MIRBuilder.buildFrameIndex(FramePtr, FI);
-  return AddrReg.getReg(0);
-}
-
-void FormalArgHandler::markPhysRegUsed(unsigned PhysReg) {
-  MIRBuilder.getMBB().addLiveIn(PhysReg);
-}
-
-void CallReturnHandler::markPhysRegUsed(unsigned PhysReg) {
-  MIB.addDef(PhysReg, RegState::Implicit);
+  return handleAssignments(Handler, Args, CCInfo, ArgLocs, MIRBuilder);  
 }

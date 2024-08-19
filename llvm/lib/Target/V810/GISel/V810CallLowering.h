@@ -30,6 +30,11 @@ public:
                                     CCState &CCInfo,
                                     SmallVectorImpl<CCValAssign> &ArgLocs,
                                     SmallVectorImpl<ArgInfo> &OutArgs) const;
+private:
+  bool doDetermineAndHandleAssignments(
+    ValueHandler &Handler, ValueAssigner &Assigner,
+    SmallVectorImpl<ArgInfo> &Args, MachineIRBuilder &MIRBuilder,
+    CallingConv::ID CallConv, bool IsVarArg, unsigned NumFixedParams) const;
 };
 
 class V810IncomingValueHandler : public CallLowering::IncomingValueHandler {

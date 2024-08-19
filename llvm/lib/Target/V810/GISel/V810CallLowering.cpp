@@ -173,11 +173,10 @@ bool V810CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
     return false;
   }
 
-  // For non-tail calls, adjust the call stack first
-  if (!Info.IsTailCall)
-    MIRBuilder.buildInstr(V810::ADJCALLSTACKDOWN)
-      .addImm(ArgAssigner.StackSize)
-      .addImm(0);
+  // Adjust the call stack first
+  MIRBuilder.buildInstr(V810::ADJCALLSTACKDOWN)
+    .addImm(ArgAssigner.StackSize)
+    .addImm(0);
 
   // Build a call instruction. We use different instructions based on whether
   // it's a normal or tail call, and whether the function is "indirect" (determined at runtime).
@@ -199,10 +198,23 @@ bool V810CallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   if (!handleAssignments(Handler, OutArgs, CCInfo, ArgLocs, MIRBuilder))
     return false;
 
-  MIRBuilder.insertInstr(Call);
+  if (Info.IsTailCall) {
+    // If we made a tail call, fix the stack
+    MIRBuilder.buildInstr(V810::ADJCALLSTACKUP)
+      .addImm(ArgAssigner.StackSize)
+      .addImm(0);
 
-  // If we made a tail call, we're already done!
-  if (Info.IsTailCall) return true;
+    // And THEN make the call
+    MIRBuilder.insertInstr(Call);
+
+    // And then we're done!
+    MF.getFrameInfo().setHasTailCall();
+    Info.LoweredTailCall = true;
+    return true;
+  }
+
+  // If this isn't a tail call, run it now
+  MIRBuilder.insertInstr(Call);
 
   // For normal functions, we have to read values from the right registers/addresses
   if (Info.CanLowerReturn && !Info.OrigRet.Ty->isVoidTy()) {

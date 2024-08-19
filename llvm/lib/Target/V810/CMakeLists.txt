@@ -9,6 +9,7 @@ tablegen(LLVM V810GenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM V810GenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM V810GenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM V810GenMCCodeEmitter.inc -gen-emitter)
+tablegen(LLVM V810GenRegisterBank.inc -gen-register-bank)
 tablegen(LLVM V810GenRegisterInfo.inc -gen-register-info)
 tablegen(LLVM V810GenSubtargetInfo.inc -gen-subtarget)
 
@@ -31,6 +32,7 @@ add_llvm_target(V810CodeGen
   V810TargetObjectFile.cpp
   V810TargetTransformInfo.cpp
   GISel/V810CallLowering.cpp
+  GISel/V810RegisterBankInfo.cpp
 
   LINK_COMPONENTS
   AsmPrinter

@@ -14,6 +14,7 @@ def FeatureAppRegisters
 
 
 include "V810RegisterInfo.td"
+include "GISel/V810RegisterBanks.td"
 include "V810CallingConv.td"
 include "V810Schedule.td"
 include "V810InstrInfo.td"

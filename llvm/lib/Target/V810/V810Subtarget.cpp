@@ -1,5 +1,6 @@
 #include "V810Subtarget.h"
 #include "GISel/V810CallLowering.h"
+#include "GISel/V810RegisterBankInfo.h"
 #include "V810.h"
 
 using namespace llvm;
@@ -35,8 +36,13 @@ V810Subtarget::V810Subtarget(const Triple &TT, const std::string &CPU,
       InstrInfo(), TLInfo(TM, initializeSubtargetDependencies(TT, CPU, FS)), FrameLowering(),
       InstrItins(getInstrItineraryForCPU(getCPUName(TT, CPU))) {
   CallLoweringInfo.reset(new V810CallLowering(*getTargetLowering()));
+  RegBankInfo.reset(new V810RegisterBankInfo());
 }
 
 const CallLowering *V810Subtarget::getCallLowering() const {
   return CallLoweringInfo.get();
+}
+
+const RegisterBankInfo *V810Subtarget::getRegBankInfo() const {
+  return RegBankInfo.get();
 }

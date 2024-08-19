@@ -28,6 +28,7 @@ private:
   InstrItineraryData InstrItins;
 
   std::unique_ptr<CallLowering> CallLoweringInfo;
+  std::unique_ptr<RegisterBankInfo> RegBankInfo;
 public:
   V810Subtarget(const Triple &TT, const std::string &CPU,
                 const std::string &FS, const TargetMachine &TM);
@@ -50,6 +51,8 @@ public:
   }
 
   const CallLowering *getCallLowering() const override;
+
+  const RegisterBankInfo *getRegBankInfo() const override;
 
   bool isNintendo() const { return IsNintendo; }
 

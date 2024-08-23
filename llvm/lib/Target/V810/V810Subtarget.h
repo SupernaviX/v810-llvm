@@ -6,6 +6,7 @@
 #include "V810ISelLowering.h"
 #include "V810SelectionDAGInfo.h"
 #include "llvm/CodeGen/GlobalISel/CallLowering.h"
+#include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/CodeGen/TargetSubtargetInfo.h"
 
@@ -28,10 +29,12 @@ private:
   InstrItineraryData InstrItins;
 
   std::unique_ptr<CallLowering> CallLoweringInfo;
+  std::unique_ptr<InstructionSelector> InstSelector;
+  std::unique_ptr<LegalizerInfo> Legalizer;
   std::unique_ptr<RegisterBankInfo> RegBankInfo;
 public:
   V810Subtarget(const Triple &TT, const std::string &CPU,
-                const std::string &FS, const TargetMachine &TM);
+                const std::string &FS, const V810TargetMachine &TM);
 
   const InstrItineraryData *getInstrItineraryData() const override {
     return &InstrItins;
@@ -51,6 +54,10 @@ public:
   }
 
   const CallLowering *getCallLowering() const override;
+
+  InstructionSelector *getInstructionSelector() const override;
+
+  const LegalizerInfo *getLegalizerInfo() const override;
 
   const RegisterBankInfo *getRegBankInfo() const override;
 

@@ -7,6 +7,7 @@ tablegen(LLVM V810GenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM V810GenCallingConv.inc -gen-callingconv)
 tablegen(LLVM V810GenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM V810GenDisassemblerTables.inc -gen-disassembler)
+tablegen(LLVM V810GenGlobalISel.inc -gen-global-isel)
 tablegen(LLVM V810GenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM V810GenMCCodeEmitter.inc -gen-emitter)
 tablegen(LLVM V810GenRegisterBank.inc -gen-register-bank)
@@ -32,6 +33,8 @@ add_llvm_target(V810CodeGen
   V810TargetObjectFile.cpp
   V810TargetTransformInfo.cpp
   GISel/V810CallLowering.cpp
+  GISel/V810InstructionSelector.cpp
+  GISel/V810LegalizerInfo.cpp
   GISel/V810RegisterBankInfo.cpp
 
   LINK_COMPONENTS

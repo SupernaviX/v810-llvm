@@ -81,6 +81,11 @@ namespace llvm {
     LLT getOptimalMemOpLLT(const MemOp &Op,
                            const AttributeList &FuncAttributes) const override;
 
+    bool allowsMemoryAccess(LLVMContext &Context, const DataLayout &DL, EVT VT,
+                          unsigned AddrSpace, Align Alignment,
+                          MachineMemOperand::Flags Flags,
+                          unsigned *Fast) const override;
+
     MachineBasicBlock *
     EmitInstrWithCustomInserter(MachineInstr &MI,
                                 MachineBasicBlock *MBB) const override;

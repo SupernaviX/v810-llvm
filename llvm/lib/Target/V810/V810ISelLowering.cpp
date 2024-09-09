@@ -953,6 +953,17 @@ LLT V810TargetLowering::getOptimalMemOpLLT(const MemOp &Op,
   return LLT::scalar(32);
 }
 
+bool V810TargetLowering::allowsMemoryAccess(
+    LLVMContext &Context, const DataLayout &DL, EVT VT, unsigned AddrSpace,
+    Align Alignment, MachineMemOperand::Flags Flags, unsigned *Fast) const {
+  // We specify an alignment for 64-bit accesses, but don't actually support loading/storing them directly.
+  if (VT.bitsGT(MVT::i32)) {
+    return false;
+  }
+  return TargetLoweringBase::allowsMemoryAccess(
+              Context, DL, VT, AddrSpace, Alignment, Flags, Fast);
+}
+
 MachineBasicBlock *
 V810TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                                                 MachineBasicBlock *BB) const {

@@ -19,11 +19,18 @@ V810LegalizerInfo::V810LegalizerInfo(const V810Subtarget &STI) {
     .legalFor({p0, s1, s8, s16, s32, s64})
     .widenScalarToNextPow2(0);
 
-  getActionDefinitionsBuilder({G_ADD, G_SUB})
+  getActionDefinitionsBuilder({G_ADD, G_SUB, G_AND, G_OR, G_XOR})
     .legalFor({p0, s32})
     .customFor({s64})
     .minScalar(0, s32)
     .widenScalarToNextPow2(0);
+
+  getActionDefinitionsBuilder({G_SHL, G_LSHR, G_ASHR})
+    .legalFor({{p0, s32}, {s32, s32}})
+    .customFor({s64, s32})
+    .minScalar(0, s32)
+    .widenScalarToNextPow2(0)
+    .clampScalar(1, s32, s32);
 
   getActionDefinitionsBuilder({G_MUL, G_UMULH, G_SMULH})
     .legalFor({s32})
@@ -51,6 +58,22 @@ V810LegalizerInfo::V810LegalizerInfo(const V810Subtarget &STI) {
     {s1, s8},
   });
 
+  getActionDefinitionsBuilder({G_LOAD, G_SEXTLOAD, G_ZEXTLOAD, G_STORE})
+    .clampScalar(0, s32, s32)
+    .legalForTypesWithMemDesc({
+        {s32, p0, s8, 1},
+        {s32, p0, s16, 2},
+        {s32, p0, s32, 4},
+        {p0, p0, s32, 4}
+    })
+    .lower();
+  
+  getActionDefinitionsBuilder({G_PTR_ADD, G_PTRMASK}).legalFor({{p0, s32}});
+  getActionDefinitionsBuilder(G_PTRTOINT).legalFor({{s32, p0}}).minScalar(0, s32);
+  getActionDefinitionsBuilder(G_INTTOPTR).legalFor({{p0, s32}}).minScalar(1, s32);
+
+  getActionDefinitionsBuilder(G_GLOBAL_VALUE).legalFor({p0});
+
   getLegacyLegalizerInfo().computeTables();
   verify(*STI.getInstrInfo());
 }
@@ -73,6 +96,12 @@ bool V810LegalizerInfo::legalizeCustom(LegalizerHelper &Helper, MachineInstr &MI
     llvm_unreachable("Invalid opcode for custom legalization");
   case G_ADD:
   case G_SUB:
+  case G_AND:
+  case G_OR:
+  case G_XOR:
+  case G_SHL:
+  case G_LSHR:
+  case G_ASHR:
     return narrowToS32(Helper, MRI, MI);
   }
 }

@@ -15,6 +15,10 @@ V810LegalizerInfo::V810LegalizerInfo(const V810Subtarget &STI) {
   getActionDefinitionsBuilder(G_MERGE_VALUES).legalFor({{s64, s32}});
   getActionDefinitionsBuilder(G_UNMERGE_VALUES).legalFor({{s32, s64}});
 
+  getActionDefinitionsBuilder({G_CONSTANT, G_FCONSTANT})
+    .legalFor({p0, s1, s8, s16, s32, s64})
+    .widenScalarToNextPow2(0);
+
   getActionDefinitionsBuilder({G_ADD, G_SUB})
     .legalFor({p0, s32})
     .customFor({s64})

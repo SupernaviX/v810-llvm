@@ -22,9 +22,9 @@ V810LegalizerInfo::V810LegalizerInfo(const V810Subtarget &STI) {
     .widenScalarToNextPow2(0);
 
   getActionDefinitionsBuilder({G_MUL, G_UMULH, G_SMULH})
-    .legalFor({s32, s64})
-    .minScalar(0, s32)
-    .widenScalarToNextPow2(0);
+    .legalFor({s32})
+    .widenScalarToNextPow2(0)
+    .clampScalar(0, s32, s32);
 
   getActionDefinitionsBuilder({G_UADDE, G_UADDO, G_USUBE, G_USUBO}).lower();
 
@@ -51,12 +51,12 @@ V810LegalizerInfo::V810LegalizerInfo(const V810Subtarget &STI) {
   verify(*STI.getInstrInfo());
 }
 
-static bool legalizeAddSub(LegalizerHelper &Helper, MachineRegisterInfo &MRI, MachineInstr &MI) {
+static bool narrowToS32(LegalizerHelper &Helper, MachineRegisterInfo &MRI, MachineInstr &MI) {
   // We only try to legalize s64
   assert(MRI.getType(MI.getOperand(0).getReg()).getSizeInBits() > 32);
 
   LLT s32 = LLT::scalar(32);
-  return Helper.narrowScalarAddSub(MI, 0, s32) != LegalizerHelper::UnableToLegalize;
+  return Helper.narrowScalar(MI, 0, s32) != LegalizerHelper::UnableToLegalize;
 }
 
 bool V810LegalizerInfo::legalizeCustom(LegalizerHelper &Helper, MachineInstr &MI,
@@ -69,6 +69,6 @@ bool V810LegalizerInfo::legalizeCustom(LegalizerHelper &Helper, MachineInstr &MI
     llvm_unreachable("Invalid opcode for custom legalization");
   case G_ADD:
   case G_SUB:
-    return legalizeAddSub(Helper, MRI, MI);
+    return narrowToS32(Helper, MRI, MI);
   }
 }

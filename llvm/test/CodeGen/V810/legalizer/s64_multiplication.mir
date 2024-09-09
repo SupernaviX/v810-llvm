@@ -11,10 +11,16 @@ body:              |
     ; CHECK-NEXT: {{  $}}
     ; CHECK-NEXT: [[COPY:%[0-9]+]]:_(s32) = COPY $r6
     ; CHECK-NEXT: [[ANYEXT:%[0-9]+]]:_(s64) = G_ANYEXT [[COPY]](s32)
-    ; CHECK-NEXT: [[MUL:%[0-9]+]]:_(s64) = G_MUL [[ANYEXT]], [[ANYEXT]]
-    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[MUL]](s64)
-    ; CHECK-NEXT: $r10 = COPY [[UV]](s32)
-    ; CHECK-NEXT: $r11 = COPY [[UV1]](s32)
+    ; CHECK-NEXT: [[UV:%[0-9]+]]:_(s32), [[UV1:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[ANYEXT]](s64)
+    ; CHECK-NEXT: [[UV2:%[0-9]+]]:_(s32), [[UV3:%[0-9]+]]:_(s32) = G_UNMERGE_VALUES [[ANYEXT]](s64)
+    ; CHECK-NEXT: [[MUL:%[0-9]+]]:_(s32) = G_MUL [[COPY]], [[COPY]]
+    ; CHECK-NEXT: [[MUL1:%[0-9]+]]:_(s32) = G_MUL [[UV1]], [[COPY]]
+    ; CHECK-NEXT: [[MUL2:%[0-9]+]]:_(s32) = G_MUL [[COPY]], [[UV3]]
+    ; CHECK-NEXT: [[UMULH:%[0-9]+]]:_(s32) = G_UMULH [[COPY]], [[COPY]]
+    ; CHECK-NEXT: [[ADD:%[0-9]+]]:_(s32) = G_ADD [[MUL1]], [[MUL2]]
+    ; CHECK-NEXT: [[ADD1:%[0-9]+]]:_(s32) = G_ADD [[ADD]], [[UMULH]]
+    ; CHECK-NEXT: $r10 = COPY [[MUL]](s32)
+    ; CHECK-NEXT: $r11 = COPY [[ADD1]](s32)
     ; CHECK-NEXT: RET implicit $r10, implicit $r11
     %0:_(s32) = COPY $r6
     %1:_(s64) = G_ANYEXT %0

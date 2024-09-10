@@ -37,6 +37,12 @@ V810LegalizerInfo::V810LegalizerInfo(const V810Subtarget &STI) {
     .widenScalarToNextPow2(0)
     .clampScalar(0, s32, s32);
 
+  // No need to support wider types, ExpandLargeDivRem will take care of that
+  getActionDefinitionsBuilder({G_SDIV, G_SREM, G_SDIVREM, G_UDIV, G_UREM, G_UDIVREM})
+    .legalFor({s32})
+    .widenScalarToNextPow2(0)
+    .minScalar(0, s32);
+
   getActionDefinitionsBuilder({G_UADDE, G_UADDO, G_USUBE, G_USUBO}).lower();
 
   getActionDefinitionsBuilder(G_ICMP)

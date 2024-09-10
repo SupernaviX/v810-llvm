@@ -21,6 +21,7 @@ V810TargetLowering::V810TargetLowering(const TargetMachine &TM,
     : TargetLowering(TM), Subtarget(&STI) {
 
   setBooleanContents(BooleanContent::ZeroOrOneBooleanContent);  
+  setMaxDivRemBitWidthSupported(32);
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, &V810::GenRegsRegClass);

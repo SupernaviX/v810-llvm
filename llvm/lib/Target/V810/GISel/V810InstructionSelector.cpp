@@ -61,6 +61,18 @@ V810InstructionSelector::V810InstructionSelector(const V810TargetMachine &TM,
 }
 
 bool V810InstructionSelector::select(MachineInstr &MI) {
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+
+  if (!MI.isPreISelOpcode()) {
+    for (MachineOperand &Op : MI.all_defs()) {
+      if (Op.getReg().isPhysical() || MRI.getRegClassOrNull(Op.getReg())) {
+        continue;
+      }
+      Register Reg = constrainOperandRegClass(*MF, TRI, MRI, TII, RBI, MI, V810::GenRegsRegClass, Op);
+      Op.setReg(Reg);
+    }
+    return true;
+  }
   return selectImpl(MI, *CoverageInfo);
 }
 

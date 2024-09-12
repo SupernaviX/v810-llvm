@@ -77,8 +77,11 @@ V810LegalizerInfo::V810LegalizerInfo(const V810Subtarget &STI) {
   getActionDefinitionsBuilder({G_PTR_ADD, G_PTRMASK}).legalFor({{p0, s32}});
   getActionDefinitionsBuilder(G_PTRTOINT).legalFor({{s32, p0}}).minScalar(0, s32);
   getActionDefinitionsBuilder(G_INTTOPTR).legalFor({{p0, s32}}).minScalar(1, s32);
+  getActionDefinitionsBuilder(G_FRAME_INDEX).legalFor({p0});
 
   getActionDefinitionsBuilder(G_GLOBAL_VALUE).legalFor({p0});
+
+  getActionDefinitionsBuilder(G_BRCOND).legalFor({s32}).clampScalar(0, s32, s32);
 
   getLegacyLegalizerInfo().computeTables();
   verify(*STI.getInstrInfo());

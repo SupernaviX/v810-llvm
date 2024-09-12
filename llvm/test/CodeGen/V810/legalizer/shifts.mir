@@ -16,7 +16,7 @@ body:              |
     ; CHECK-NEXT: RET implicit $r10
     %0:_(s32) = COPY $r6
     %1:_(s16) = G_TRUNC %0
-    %2:_(s32) = G_CONSTANT i32 1
+    %2:_(s64) = G_CONSTANT i64 1
     %3:_(s16) = G_SHL %1, %2
     %4:_(s32) = G_ANYEXT %3:_(s16)
     $r10 = COPY %4(s32)

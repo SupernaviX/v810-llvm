@@ -26,11 +26,11 @@ V810LegalizerInfo::V810LegalizerInfo(const V810Subtarget &STI) {
     .widenScalarToNextPow2(0);
 
   getActionDefinitionsBuilder({G_SHL, G_LSHR, G_ASHR})
+    .clampScalar(1, s32, s32)
     .legalFor({{p0, s32}, {s32, s32}})
     .customFor({s64, s32})
     .minScalar(0, s32)
-    .widenScalarToNextPow2(0)
-    .clampScalar(1, s32, s32);
+    .widenScalarToNextPow2(0);
 
   getActionDefinitionsBuilder({G_MUL, G_UMULH, G_SMULH})
     .legalFor({s32})
@@ -47,7 +47,7 @@ V810LegalizerInfo::V810LegalizerInfo(const V810Subtarget &STI) {
 
   getActionDefinitionsBuilder(G_ICMP)
     .legalForCartesianProduct({s1}, {s32, p0})
-    .minScalar(1, s32)
+    .clampScalar(1, s32, s32)
     .widenScalarToNextPow2(1);
 
   getActionDefinitionsBuilder({G_ANYEXT, G_SEXT, G_ZEXT}).legalFor({

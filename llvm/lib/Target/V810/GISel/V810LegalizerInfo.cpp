@@ -32,6 +32,9 @@ V810LegalizerInfo::V810LegalizerInfo(const V810Subtarget &STI) {
     .minScalar(0, s32)
     .widenScalarToNextPow2(0);
 
+  getActionDefinitionsBuilder({G_CTLZ, G_CTLZ_ZERO_UNDEF, G_CTTZ, G_CTTZ_ZERO_UNDEF, G_CTPOP})
+    .lower();
+
   getActionDefinitionsBuilder({G_MUL, G_UMULH, G_SMULH})
     .legalFor({s32})
     .widenScalarToNextPow2(0)

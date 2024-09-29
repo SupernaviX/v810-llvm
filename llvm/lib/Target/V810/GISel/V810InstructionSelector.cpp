@@ -1,5 +1,6 @@
 #include "V810InstructionSelector.h"
 #include "llvm/CodeGen/GlobalISel/GIMatchTableExecutorImpl.h"
+#include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/GlobalISel/MIPatternMatch.h"
 
@@ -27,6 +28,12 @@ private:
   const V810InstrInfo &TII;
   const V810RegisterInfo &TRI;
   const V810RegisterBankInfo &RBI;
+
+  bool selectZext(MachineInstr &MI) const;
+  bool selectIcmp(MachineInstr &MI) const;
+
+  template <int Bits>
+  bool matchImm(Register Reg, int64_t &Value) const;
 
   /// tblgen-erated 'select' implementation, used as the initial selector for
   /// the patterns that don't require complex C++.
@@ -60,6 +67,67 @@ V810InstructionSelector::V810InstructionSelector(const V810TargetMachine &TM,
 {
 }
 
+bool V810InstructionSelector::selectZext(MachineInstr &MI) const {
+  // TODO: need u64 support?
+  const Register Dst = MI.getOperand(0).getReg();
+  const Register Src = MI.getOperand(1).getReg();
+  auto &MRI = MF->getRegInfo();
+  MRI.replaceRegWith(Dst, Src);
+  MI.removeFromParent();
+  return true;
+}
+
+static V810CC::CondCodes PredicateToCC(CmpInst::Predicate Pred) {
+  switch (Pred) {
+  default: llvm_unreachable("Unknown integer condition code!");
+  case CmpInst::Predicate::ICMP_EQ:   return V810CC::CC_E;
+  case CmpInst::Predicate::ICMP_NE:   return V810CC::CC_NE;
+  case CmpInst::Predicate::ICMP_UGT:  return V810CC::CC_H;
+  case CmpInst::Predicate::ICMP_UGE:  return V810CC::CC_NC;
+  case CmpInst::Predicate::ICMP_ULT:  return V810CC::CC_C;
+  case CmpInst::Predicate::ICMP_ULE:  return V810CC::CC_NH;
+  case CmpInst::Predicate::ICMP_SGT:  return V810CC::CC_GT;
+  case CmpInst::Predicate::ICMP_SGE:  return V810CC::CC_GE;
+  case CmpInst::Predicate::ICMP_SLT:  return V810CC::CC_LT;
+  case CmpInst::Predicate::ICMP_SLE:  return V810CC::CC_LE;
+  }
+}
+
+template <int Bits>
+bool V810InstructionSelector::matchImm(Register Reg, int64_t &Value) const {
+  using namespace llvm::MIPatternMatch;
+
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  if (mi_match(Reg, MRI, m_ICst(Value))) {
+    return isInt<Bits>(Value);
+  }
+  return false;
+}
+
+bool V810InstructionSelector::selectIcmp(MachineInstr &MI) const {
+  const Register Dst = MI.getOperand(0).getReg();
+  CmpInst::Predicate Pred = (CmpInst::Predicate)MI.getOperand(1).getPredicate();
+  const Register LHS = MI.getOperand(2).getReg();
+  const Register RHS = MI.getOperand(3).getReg();
+
+  MachineIRBuilder MIB(MI);
+
+  int64_t Imm;
+  if (matchImm<5>(RHS, Imm)) {
+    MIB.buildInstr(V810::CMPri, {}, {LHS, Imm});
+  } else if (matchImm<5>(LHS, Imm)) {
+    Pred = CmpInst::getSwappedPredicate(Pred);
+    MIB.buildInstr(V810::CMPri, {}, {RHS, Imm});
+  } else {
+    MIB.buildInstr(V810::CMPrr, {}, {LHS, RHS});
+  }
+
+  V810CC::CondCodes CC = PredicateToCC(Pred);
+  auto Setf = MIB.buildInstr(V810::SETF, {Dst}, {(int64_t) CC});
+  MI.eraseFromParent();
+  return constrainSelectedInstRegOperands(*Setf, TII, TRI, RBI);
+}
+
 bool V810InstructionSelector::select(MachineInstr &MI) {
   MachineRegisterInfo &MRI = MF->getRegInfo();
 
@@ -72,6 +140,15 @@ bool V810InstructionSelector::select(MachineInstr &MI) {
       Op.setReg(Reg);
     }
     return true;
+  }
+
+  switch (MI.getOpcode()) {
+    default: break;
+    case TargetOpcode::G_ZEXT:
+    case TargetOpcode::G_ANYEXT:
+      return selectZext(MI);
+    case TargetOpcode::G_ICMP:
+      return selectIcmp(MI);
   }
   return selectImpl(MI, *CoverageInfo);
 }
@@ -135,7 +212,10 @@ V810InstructionSelector::selectAddrRI(MachineOperand &Root) const {
     }};
   }
 
-  return std::nullopt;
+  return {{
+    [=](MachineInstrBuilder &MIB) { MIB.add(Root); },
+    [=](MachineInstrBuilder &MIB) { MIB.addImm(0); },
+  }};
 }
 
 InstructionSelector *llvm::createV810InstructionSelector(

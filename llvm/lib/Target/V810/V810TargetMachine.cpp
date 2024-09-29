@@ -20,6 +20,9 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeV810Target() {
   RegisterTargetMachine<V810TargetMachine> X(getTheV810Target());
   auto PR = PassRegistry::getPassRegistry();
   initializeGlobalISel(*PR);
+  initializeV810PreLegalizerCombinerPass(*PR);
+  initializeV810O0PreLegalizerCombinerPass(*PR);
+  initializeV810PostLegalizerCombinerPass(*PR);
 }
 
 static std::string computeDataLayout(const Triple &T) {
@@ -90,7 +93,9 @@ public:
   void addPreEmitPass() override;
   void addPreEmitPass2() override;
   bool addIRTranslator() override;
+  void addPreLegalizeMachineIR() override;
   bool addLegalizeMachineIR() override;
+  void addPreRegBankSelect() override;
   bool addRegBankSelect() override;
   bool addGlobalInstructionSelect() override;
 };
@@ -137,9 +142,22 @@ bool V810PassConfig::addIRTranslator() {
   return false;
 }
 
+void V810PassConfig::addPreLegalizeMachineIR() {
+  if (getOptLevel() == CodeGenOptLevel::None) {
+    addPass(createV810O0PreLegalizerCombiner());
+  } else {
+    addPass(createV810PreLegalizerCombiner());
+  }
+}
+
 bool V810PassConfig::addLegalizeMachineIR() {
   addPass(new Legalizer());
   return false;
+}
+
+void V810PassConfig::addPreRegBankSelect() {
+  if (getOptLevel() != CodeGenOptLevel::None)
+    addPass(createV810PostLegalizerCombiner());
 }
 
 bool V810PassConfig::addRegBankSelect() {

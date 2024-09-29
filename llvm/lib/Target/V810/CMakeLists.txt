@@ -10,6 +10,12 @@ tablegen(LLVM V810GenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM V810GenGlobalISel.inc -gen-global-isel)
 tablegen(LLVM V810GenInstrInfo.inc -gen-instr-info)
 tablegen(LLVM V810GenMCCodeEmitter.inc -gen-emitter)
+tablegen(LLVM V810GenPreLegalizeGICombiner.inc -gen-global-isel-combiner
+              -combiners="V810PreLegalizerCombiner")
+tablegen(LLVM V810GenO0PreLegalizeGICombiner.inc -gen-global-isel-combiner
+              -combiners="V810O0PreLegalizerCombiner")
+tablegen(LLVM V810GenPostLegalizeGICombiner.inc -gen-global-isel-combiner
+              -combiners="V810PostLegalizerCombiner")
 tablegen(LLVM V810GenRegisterBank.inc -gen-register-bank)
 tablegen(LLVM V810GenRegisterInfo.inc -gen-register-info)
 tablegen(LLVM V810GenSubtargetInfo.inc -gen-subtarget)
@@ -35,6 +41,9 @@ add_llvm_target(V810CodeGen
   GISel/V810CallLowering.cpp
   GISel/V810InstructionSelector.cpp
   GISel/V810LegalizerInfo.cpp
+  GISel/V810PreLegalizerCombiner.cpp
+  GISel/V810O0PreLegalizerCombiner.cpp
+  GISel/V810PostLegalizerCombiner.cpp
   GISel/V810RegisterBankInfo.cpp
 
   LINK_COMPONENTS

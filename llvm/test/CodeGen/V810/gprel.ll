@@ -48,20 +48,14 @@ define i32 @test_gprel_read_offset_nonword() {
 ; GPREL-LABEL: test_gprel_read_offset_nonword:
 ; GPREL:       # %bb.0: # %entry
 ; GPREL-NEXT:    movea sdaoff(mutable_global_struct), r4, r6
-; GPREL-NEXT:    ld.h 4[r6], r6
-; GPREL-NEXT:    andi 65535, r6, r10
-; GPREL-NEXT:    shl 16, r10
-; GPREL-NEXT:    sar 16, r10
+; GPREL-NEXT:    ld.h 4[r6], r10
 ; GPREL-NEXT:    jmp [r31]
 ;
 ; NO-GPREL-LABEL: test_gprel_read_offset_nonword:
 ; NO-GPREL:       # %bb.0: # %entry
 ; NO-GPREL-NEXT:    movhi hi(mutable_global_struct), r0, r6
 ; NO-GPREL-NEXT:    movea lo(mutable_global_struct), r6, r6
-; NO-GPREL-NEXT:    ld.h 4[r6], r6
-; NO-GPREL-NEXT:    andi 65535, r6, r10
-; NO-GPREL-NEXT:    shl 16, r10
-; NO-GPREL-NEXT:    sar 16, r10
+; NO-GPREL-NEXT:    ld.h 4[r6], r10
 ; NO-GPREL-NEXT:    jmp [r31]
 entry:
   %0 = load i16, ptr getelementptr inbounds (%SomeStruct, ptr @mutable_global_struct, i32 0, i32 1), align 4

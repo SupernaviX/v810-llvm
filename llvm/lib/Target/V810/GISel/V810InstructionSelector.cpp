@@ -1,4 +1,6 @@
 #include "V810InstructionSelector.h"
+#include "V810TargetObjectFile.h"
+#include "MCTargetDesc/V810MCExpr.h"
 #include "llvm/CodeGen/GlobalISel/GIMatchTableExecutorImpl.h"
 #include "llvm/CodeGen/GlobalISel/GISelKnownBits.h"
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
@@ -24,13 +26,19 @@ public:
 
   ComplexRendererFns selectAddrRI(MachineOperand &Root) const;
 private:
+  const V810TargetMachine &TM;
   const V810Subtarget &STI;
   const V810InstrInfo &TII;
   const V810RegisterInfo &TRI;
   const V810RegisterBankInfo &RBI;
 
+  bool IsGPRelative(const GlobalValue *GVal) const;
+
   bool selectZext(MachineInstr &MI) const;
+  bool selectSext(MachineInstr &MI) const;
+  bool selectTrunc(MachineInstr &MI) const;
   bool selectIcmp(MachineInstr &MI) const;
+  bool selectGlobalValue(MachineInstr &MI) const;
 
   template <int Bits>
   bool matchImm(Register Reg, int64_t &Value) const;
@@ -57,7 +65,7 @@ private:
 V810InstructionSelector::V810InstructionSelector(const V810TargetMachine &TM,
                                                        V810Subtarget &STI,
                                                        V810RegisterBankInfo &RBI)
-    : STI(STI), TII(*STI.getInstrInfo()), TRI(*STI.getRegisterInfo()), RBI(RBI),
+    : TM(TM), STI(STI), TII(*STI.getInstrInfo()), TRI(*STI.getRegisterInfo()), RBI(RBI),
 #define GET_GLOBALISEL_PREDICATES_INIT
 #include "V810GenGlobalISel.inc"
 #undef GET_GLOBALISEL_PREDICATES_INIT
@@ -73,7 +81,57 @@ bool V810InstructionSelector::selectZext(MachineInstr &MI) const {
   const Register Src = MI.getOperand(1).getReg();
   auto &MRI = MF->getRegInfo();
   MRI.replaceRegWith(Dst, Src);
-  MI.removeFromParent();
+  MI.eraseFromParent();
+  return true;
+}
+
+bool V810InstructionSelector::selectSext(MachineInstr &MI) const {
+  const Register Dst = MI.getOperand(0).getReg();
+  const Register Src = MI.getOperand(1).getReg();
+  auto &MRI = MF->getRegInfo();
+  const LLT DstType = MRI.getType(Dst);
+  const LLT SrcType = MRI.getType(Src);
+  MachineIRBuilder MIB(MI);
+
+  const int64_t ShiftAmount = DstType.getScalarSizeInBits() - SrcType.getScalarSizeInBits();
+
+  const Register Tmp = MRI.createVirtualRegister(&V810::GenRegsRegClass);
+  MRI.setType(Tmp, SrcType);
+  MIB.buildInstr(V810::SHLi)
+    .addDef(Tmp)
+    .addUse(Src)
+    .addImm(ShiftAmount);
+  MRI.setType(Tmp, DstType);
+  MIB.buildInstr(V810::SARi)
+    .addDef(Dst)
+    .addUse(Tmp)
+    .addImm(ShiftAmount);
+  MRI.setRegClass(Dst, &V810::GenRegsRegClass);
+
+  MI.eraseFromParent();
+  return true;
+}
+
+bool V810InstructionSelector::selectTrunc(MachineInstr &MI) const {
+  const Register Dst = MI.getOperand(0).getReg();
+  const Register Src = MI.getOperand(1).getReg();
+  auto &MRI = MF->getRegInfo();
+  const LLT DstType = MRI.getType(Dst);
+  const LLT SrcType = MRI.getType(Src);
+
+  MachineIRBuilder MIB(MI);
+
+  int64_t MaskValue = (1 << DstType.getScalarSizeInBits()) - 1;
+
+  MRI.setType(Dst, SrcType);
+  MIB.buildInstr(V810::ANDI)
+    .addDef(Dst)
+    .addUse(Src)
+    .addImm(MaskValue);
+  MRI.setType(Dst, DstType);
+  MRI.setRegClass(Dst, &V810::GenRegsRegClass);
+
+  MI.eraseFromParent();
   return true;
 }
 
@@ -128,6 +186,45 @@ bool V810InstructionSelector::selectIcmp(MachineInstr &MI) const {
   return constrainSelectedInstRegOperands(*Setf, TII, TRI, RBI);
 }
 
+bool V810InstructionSelector::IsGPRelative(const GlobalValue *GVal) const {
+  if (!STI.enableGPRelativeRAM()) {
+    return false;
+  }
+  const V810TargetObjectFile *TLOF =
+      static_cast<const V810TargetObjectFile *>(
+          TM.getObjFileLowering());
+  return TLOF->isGlobalInSmallSection(GVal->getAliaseeObject(), TM);
+}
+
+bool V810InstructionSelector::selectGlobalValue(MachineInstr &MI) const {
+  const Register Dst = MI.getOperand(0).getReg();
+  const GlobalValue *GVal = MI.getOperand(1).getGlobal();
+  MachineIRBuilder MIB(MI);
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+
+  if (IsGPRelative(GVal)) {
+    MIB.buildInstr(V810::MOVEA)
+      .addDef(Dst)
+      .addUse(V810::R4)
+      .addGlobalAddress(GVal, 0, V810MCExpr::VK_V810_SDAOFF);
+  } else {
+    const Register HiReg = MRI.createVirtualRegister(&V810::GenRegsRegClass);
+    MRI.setType(HiReg, MRI.getType(Dst));
+
+    MIB.buildInstr(V810::MOVHI)
+      .addDef(HiReg)
+      .addUse(V810::R0)
+      .addGlobalAddress(GVal, 0, V810MCExpr::VK_V810_HI);
+    MIB.buildInstr(V810::MOVEA)
+      .addDef(Dst)
+      .addUse(HiReg)
+      .addGlobalAddress(GVal, 0, V810MCExpr::VK_V810_LO);
+  }
+
+  MI.eraseFromParent();
+  return true;
+}
+
 bool V810InstructionSelector::select(MachineInstr &MI) {
   MachineRegisterInfo &MRI = MF->getRegInfo();
 
@@ -142,15 +239,24 @@ bool V810InstructionSelector::select(MachineInstr &MI) {
     return true;
   }
 
+  if (selectImpl(MI, *CoverageInfo))
+    return true;
+
   switch (MI.getOpcode()) {
-    default: break;
+    default:
+      return false;
     case TargetOpcode::G_ZEXT:
     case TargetOpcode::G_ANYEXT:
       return selectZext(MI);
+    case TargetOpcode::G_SEXT:
+      return selectSext(MI);
+    case TargetOpcode::G_TRUNC:
+      return selectTrunc(MI);
     case TargetOpcode::G_ICMP:
       return selectIcmp(MI);
+    case TargetOpcode::G_GLOBAL_VALUE:
+      return selectGlobalValue(MI);
   }
-  return selectImpl(MI, *CoverageInfo);
 }
 
 InstructionSelector::ComplexRendererFns

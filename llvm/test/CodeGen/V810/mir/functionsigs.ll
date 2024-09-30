@@ -88,6 +88,17 @@ define i32 @intTest(i1 %a, i8 %b, i16 %c, i32 %d) {
     ret i32 %d
 }
 
+define ptr @ptrTest(ptr %p) {
+  ; CHECK-LABEL: name: ptrTest
+  ; CHECK: bb.1 (%ir-block.0):
+  ; CHECK-NEXT:   liveins: $r6
+  ; CHECK-NEXT: {{  $}}
+  ; CHECK-NEXT:   [[COPY:%[0-9]+]]:_(p0) = COPY $r6
+  ; CHECK-NEXT:   $r10 = COPY [[COPY]](p0)
+  ; CHECK-NEXT:   RET implicit $r10
+  ret ptr %p
+}
+
 define i32 @manyParamsTest(i1 %a, i8 %b, i16 %c, i32 %d, i32 %e) {
   ; CHECK-LABEL: name: manyParamsTest
   ; CHECK: bb.1 (%ir-block.0):

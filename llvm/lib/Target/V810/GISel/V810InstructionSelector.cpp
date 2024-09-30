@@ -24,6 +24,7 @@ public:
   bool select(MachineInstr &MI) override;
   static const char *getName() { return DEBUG_TYPE; }
 
+  ComplexRendererFns selectGlobalRI(MachineInstr *Global, int64_t Offset) const;
   ComplexRendererFns selectAddrRI(MachineOperand &Root) const;
 private:
   const V810TargetMachine &TM;
@@ -38,7 +39,8 @@ private:
   bool selectSext(MachineInstr &MI) const;
   bool selectTrunc(MachineInstr &MI) const;
   bool selectIcmp(MachineInstr &MI) const;
-  bool selectGlobalValue(MachineInstr &MI) const;
+  bool selectGlobalValue(MachineInstr &MI, int64_t Offset = 0) const;
+  bool selectPtrAdd(MachineInstr &MI) const;
 
   template <int Bits>
   bool matchImm(Register Reg, int64_t &Value) const;
@@ -196,17 +198,18 @@ bool V810InstructionSelector::IsGPRelative(const GlobalValue *GVal) const {
   return TLOF->isGlobalInSmallSection(GVal->getAliaseeObject(), TM);
 }
 
-bool V810InstructionSelector::selectGlobalValue(MachineInstr &MI) const {
+bool V810InstructionSelector::selectGlobalValue(MachineInstr &MI, int64_t Offset) const {
   const Register Dst = MI.getOperand(0).getReg();
   const GlobalValue *GVal = MI.getOperand(1).getGlobal();
   MachineIRBuilder MIB(MI);
   MachineRegisterInfo &MRI = MF->getRegInfo();
 
+  MachineInstr *NewMI;
   if (IsGPRelative(GVal)) {
-    MIB.buildInstr(V810::MOVEA)
+    NewMI = MIB.buildInstr(V810::MOVEA)
       .addDef(Dst)
       .addUse(V810::R4)
-      .addGlobalAddress(GVal, 0, V810MCExpr::VK_V810_SDAOFF);
+      .addGlobalAddress(GVal, Offset, V810MCExpr::VK_V810_SDAOFF);
   } else {
     const Register HiReg = MRI.createVirtualRegister(&V810::GenRegsRegClass);
     MRI.setType(HiReg, MRI.getType(Dst));
@@ -214,14 +217,52 @@ bool V810InstructionSelector::selectGlobalValue(MachineInstr &MI) const {
     MIB.buildInstr(V810::MOVHI)
       .addDef(HiReg)
       .addUse(V810::R0)
-      .addGlobalAddress(GVal, 0, V810MCExpr::VK_V810_HI);
-    MIB.buildInstr(V810::MOVEA)
+      .addGlobalAddress(GVal, Offset, V810MCExpr::VK_V810_HI);
+    NewMI = MIB.buildInstr(V810::MOVEA)
       .addDef(Dst)
       .addUse(HiReg)
-      .addGlobalAddress(GVal, 0, V810MCExpr::VK_V810_LO);
+      .addGlobalAddress(GVal, Offset, V810MCExpr::VK_V810_LO);
   }
 
   MI.eraseFromParent();
+  return constrainSelectedInstRegOperands(*NewMI, TII, TRI, RBI);
+}
+
+bool V810InstructionSelector::selectPtrAdd(MachineInstr &MI) const {
+  using namespace llvm::MIPatternMatch;
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+
+  const Register Dst = MI.getOperand(0).getReg();
+  const Register Ptr = MI.getOperand(1).getReg();
+  const Register Offset = MI.getOperand(2).getReg();
+
+  int64_t ConstOffset;
+  if (!matchImm<16>(Offset, ConstOffset)) {
+    MI.setDesc(TII.get(V810::ADDrr));
+    return constrainSelectedInstRegOperands(MI, TII, TRI, RBI);
+  }
+
+  MachineInstr *PtrDef = MRI.getVRegDef(Ptr);
+  if (PtrDef->getOpcode() == TargetOpcode::G_GLOBAL_VALUE) {
+    if (!selectGlobalValue(*PtrDef, ConstOffset)) {
+      return false;
+    }
+    MRI.replaceRegWith(Dst, Ptr);
+    MI.eraseFromBundle();
+    return true;
+  }
+
+  MachineIRBuilder MIB(MI);
+  unsigned Opcode = isInt<5>(ConstOffset) ? V810::ADDri : V810::ADDI;
+  auto NewMI = MIB.buildInstr(Opcode)
+    .addDef(Dst)
+    .addUse(Ptr)
+    .addImm(ConstOffset);
+
+  if (!NewMI.constrainAllUses(TII, TRI, RBI)) {
+    return false;
+  }
+  MI.eraseFromBundle();
   return true;
 }
 
@@ -256,7 +297,45 @@ bool V810InstructionSelector::select(MachineInstr &MI) {
       return selectIcmp(MI);
     case TargetOpcode::G_GLOBAL_VALUE:
       return selectGlobalValue(MI);
+    case TargetOpcode::G_PTR_ADD:
+      return selectPtrAdd(MI);
   }
+}
+
+InstructionSelector::ComplexRendererFns
+V810InstructionSelector::selectGlobalRI(MachineInstr *Global, int64_t Offset) const {
+  assert(Global->getOpcode() == TargetOpcode::G_GLOBAL_VALUE);
+
+  const Register Dst = Global->getOperand(0).getReg();
+  const GlobalValue *GVal = Global->getOperand(1).getGlobal();
+  if (IsGPRelative(GVal)) {
+    return {{
+      [=](MachineInstrBuilder &MIB) { MIB.addReg(V810::R4); },
+      [=](MachineInstrBuilder &MIB) { MIB.addGlobalAddress(GVal, Offset, V810MCExpr::VK_V810_SDAOFF); },
+    }};
+  }
+
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  const Register HiReg = MRI.createVirtualRegister(&V810::GenRegsRegClass);
+  MRI.setType(HiReg, MRI.getType(Dst));
+  const Register LoReg = MRI.createVirtualRegister(&V810::GenRegsRegClass);
+  MRI.setType(LoReg, MRI.getType(Dst));
+
+  return {{
+    [=](MachineInstrBuilder &MIB) {
+      MachineIRBuilder MIRB(*MIB.getInstr());
+      MIRB.buildInstr(V810::MOVHI)
+        .addDef(HiReg)
+        .addUse(V810::R0)
+        .addGlobalAddress(GVal, 0, V810MCExpr::VK_V810_HI);
+      MIRB.buildInstr(V810::MOVEA)
+        .addDef(LoReg)
+        .addUse(HiReg)
+        .addGlobalAddress(GVal, 0, V810MCExpr::VK_V810_LO);
+      MIB.addReg(LoReg);
+    },
+    [=](MachineInstrBuilder &MIB) { MIB.addImm(Offset); }
+  }};
 }
 
 InstructionSelector::ComplexRendererFns
@@ -268,7 +347,7 @@ V810InstructionSelector::selectAddrRI(MachineOperand &Root) const {
 
   if (!Root.isReg())
     return std::nullopt;
-  
+
   MachineInstr *RootI = MRI.getVRegDef(Root.getReg());
 
   if (RootI->getOpcode() == TargetOpcode::G_FRAME_INDEX) {
@@ -276,6 +355,10 @@ V810InstructionSelector::selectAddrRI(MachineOperand &Root) const {
       [=](MachineInstrBuilder &MIB) { MIB.add(RootI->getOperand(1)); },
       [=](MachineInstrBuilder &MIB) { MIB.addImm(0); },
     }};
+  }
+
+  if (RootI->getOpcode() == TargetOpcode::G_GLOBAL_VALUE) {
+    return selectGlobalRI(RootI, 0);
   }
 
   Register BaseReg;
@@ -288,6 +371,10 @@ V810InstructionSelector::selectAddrRI(MachineOperand &Root) const {
         [=](MachineInstrBuilder &MIB) { MIB.add(LHS->getOperand(1)); },
         [=](MachineInstrBuilder &MIB) { MIB.addImm(Offset.getSExtValue()); }
       }};
+    }
+
+    if (LHS->getOpcode() == TargetOpcode::G_GLOBAL_VALUE) {
+      return selectGlobalRI(LHS, Offset.getSExtValue());
     }
 
     return {{

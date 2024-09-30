@@ -11,8 +11,7 @@
 define i32 @test_gprel_read() {
 ; GPREL-LABEL: test_gprel_read:
 ; GPREL:       # %bb.0: # %entry
-; GPREL-NEXT:    movea sdaoff(mutable_global), r4, r6
-; GPREL-NEXT:    ld.w 0[r6], r10
+; GPREL-NEXT:    ld.w sdaoff(mutable_global)[r4], r10
 ; GPREL-NEXT:    jmp [r31]
 ;
 ; NO-GPREL-LABEL: test_gprel_read:
@@ -29,8 +28,7 @@ entry:
 define i32 @test_gprel_read_offset() {
 ; GPREL-LABEL: test_gprel_read_offset:
 ; GPREL:       # %bb.0: # %entry
-; GPREL-NEXT:    movea sdaoff(mutable_global), r4, r6
-; GPREL-NEXT:    ld.w 8[r6], r10
+; GPREL-NEXT:    ld.w sdaoff(mutable_global+8)[r4], r10
 ; GPREL-NEXT:    jmp [r31]
 ;
 ; NO-GPREL-LABEL: test_gprel_read_offset:
@@ -47,8 +45,7 @@ entry:
 define i32 @test_gprel_read_offset_nonword() {
 ; GPREL-LABEL: test_gprel_read_offset_nonword:
 ; GPREL:       # %bb.0: # %entry
-; GPREL-NEXT:    movea sdaoff(mutable_global_struct), r4, r6
-; GPREL-NEXT:    ld.h 4[r6], r10
+; GPREL-NEXT:    ld.h sdaoff(mutable_global_struct+4)[r4], r10
 ; GPREL-NEXT:    jmp [r31]
 ;
 ; NO-GPREL-LABEL: test_gprel_read_offset_nonword:
@@ -63,11 +60,36 @@ entry:
   ret i32 %conv
 }
 
+define i32 @test_gprel_read_multiple() {
+; GPREL-LABEL: test_gprel_read_multiple:
+; GPREL:       # %bb.0: # %entry
+; GPREL-NEXT:    ld.h sdaoff(mutable_global_struct+4)[r4], r10
+; GPREL-NEXT:    ld.h sdaoff(mutable_global_struct+6)[r4], r6
+; GPREL-NEXT:    add r6, r10
+; GPREL-NEXT:    jmp [r31]
+;
+; NO-GPREL-LABEL: test_gprel_read_multiple:
+; NO-GPREL:       # %bb.0: # %entry
+; NO-GPREL-NEXT:    movhi hi(mutable_global_struct), r0, r6
+; NO-GPREL-NEXT:    movea lo(mutable_global_struct), r6, r6
+; NO-GPREL-NEXT:    ld.h 4[r6], r10
+; NO-GPREL-NEXT:    ld.h 6[r6], r6
+; NO-GPREL-NEXT:    add r6, r10
+; NO-GPREL-NEXT:    jmp [r31]
+entry:
+  %0 = load i16, ptr getelementptr inbounds (%SomeStruct, ptr @mutable_global_struct, i32 0, i32 1), align 4
+  %conv0 = sext i16 %0 to i32
+  %1 = load i16, ptr getelementptr inbounds (%SomeStruct, ptr @mutable_global_struct, i32 0, i32 2), align 4
+  %conv1 = sext i16 %1 to i32
+  %sum = add i32 %conv0, %conv1
+  ret i32 %sum
+}
+
+
 define void @test_gprel_write(i32 %value) {
 ; GPREL-LABEL: test_gprel_write:
 ; GPREL:       # %bb.0: # %entry
-; GPREL-NEXT:    movea sdaoff(mutable_global), r4, r7
-; GPREL-NEXT:    st.w r6, 0[r7]
+; GPREL-NEXT:    st.w r6, sdaoff(mutable_global)[r4]
 ; GPREL-NEXT:    jmp [r31]
 ;
 ; NO-GPREL-LABEL: test_gprel_write:
@@ -84,8 +106,7 @@ entry:
 define void @test_gprel_write_offset(i32 %value) {
 ; GPREL-LABEL: test_gprel_write_offset:
 ; GPREL:       # %bb.0: # %entry
-; GPREL-NEXT:    movea sdaoff(mutable_global), r4, r7
-; GPREL-NEXT:    st.w r6, 8[r7]
+; GPREL-NEXT:    st.w r6, sdaoff(mutable_global+8)[r4]
 ; GPREL-NEXT:    jmp [r31]
 ;
 ; NO-GPREL-LABEL: test_gprel_write_offset:
@@ -102,8 +123,7 @@ entry:
 define void @test_gprel_write_offset_nonword(i32 %value) {
 ; GPREL-LABEL: test_gprel_write_offset_nonword:
 ; GPREL:       # %bb.0: # %entry
-; GPREL-NEXT:    movea sdaoff(mutable_global_struct), r4, r7
-; GPREL-NEXT:    st.h r6, 4[r7]
+; GPREL-NEXT:    st.h r6, sdaoff(mutable_global_struct+4)[r4]
 ; GPREL-NEXT:    jmp [r31]
 ;
 ; NO-GPREL-LABEL: test_gprel_write_offset_nonword:
@@ -116,6 +136,38 @@ entry:
   %0 = trunc i32 %value to i16
   store i16 %0, ptr getelementptr inbounds (i8, ptr @mutable_global_struct, i32 4), align 4
   ret void
+}
+
+define ptr @test_return_pointer() {
+; GPREL-LABEL: test_return_pointer:
+; GPREL:       # %bb.0: # %entry
+; GPREL-NEXT:    movea sdaoff(mutable_global), r4, r10
+; GPREL-NEXT:    jmp [r31]
+;
+; NO-GPREL-LABEL: test_return_pointer:
+; NO-GPREL:       # %bb.0: # %entry
+; NO-GPREL-NEXT:    movhi hi(mutable_global), r0, r6
+; NO-GPREL-NEXT:    movea lo(mutable_global), r6, r10
+; NO-GPREL-NEXT:    jmp [r31]
+entry:
+  %0 = getelementptr inbounds i32, ptr @mutable_global, i32 0
+  ret ptr %0
+}
+
+define ptr @test_return_pointer_offset() {
+; GPREL-LABEL: test_return_pointer_offset:
+; GPREL:       # %bb.0: # %entry
+; GPREL-NEXT:    movea sdaoff(mutable_global+2), r4, r10
+; GPREL-NEXT:    jmp [r31]
+;
+; NO-GPREL-LABEL: test_return_pointer_offset:
+; NO-GPREL:       # %bb.0: # %entry
+; NO-GPREL-NEXT:    movhi hi(mutable_global+2), r0, r6
+; NO-GPREL-NEXT:    movea lo(mutable_global+2), r6, r10
+; NO-GPREL-NEXT:    jmp [r31]
+entry:
+  %0 = getelementptr inbounds i16, ptr @mutable_global, i16 1
+  ret ptr %0
 }
 
 define i32 @test_const_read() {

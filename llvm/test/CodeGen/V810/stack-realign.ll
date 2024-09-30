@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=v810 | FileCheck %s -check-prefix=V810
+; RUN: llc < %s -mtriple=v810 -global-isel | FileCheck %s -check-prefix=V810
 
 define void @test_stack_realign(i32 %value) nounwind {
 entry:

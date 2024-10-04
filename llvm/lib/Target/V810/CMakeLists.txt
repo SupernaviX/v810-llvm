@@ -47,15 +47,21 @@ add_llvm_target(V810CodeGen
   GISel/V810RegisterBankInfo.cpp
 
   LINK_COMPONENTS
+  Analysis
   AsmPrinter
   CodeGen
   CodeGenTypes
   Core
+  GlobalISel
+  IPO
   MC
+  Scalar
   SelectionDAG
   Support
   Target
   TargetParser
+  TransformUtils
+  V810Desc
   V810Info
 
   ADD_TO_COMPONENT

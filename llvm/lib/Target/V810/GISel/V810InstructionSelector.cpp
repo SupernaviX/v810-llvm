@@ -38,7 +38,14 @@ private:
   bool selectZext(MachineInstr &MI) const;
   bool selectSext(MachineInstr &MI) const;
   bool selectTrunc(MachineInstr &MI) const;
+  // Given a register which contains a boolean "condition" value,
+  // generates a CMP instruction which set CC flags appropriately,
+  // and returns the predicate which a Bcond/Setf should use.
+  // This will "fold" as many redundant operations as it can into the CMP.
+  // The CMP may be removed later by optimizeCompareInstr, if it turns out to be unnecessary.
+  bool buildCmpForCond(MachineIRBuilder &MIB, Register Cond, CmpInst::Predicate &Pred) const;
   bool selectIcmp(MachineInstr &MI) const;
+  bool selectBrcond(MachineInstr &MI) const;
   bool selectGlobalValue(MachineInstr &MI, int64_t Offset = 0) const;
   bool selectPtrAdd(MachineInstr &MI) const;
 
@@ -138,18 +145,46 @@ bool V810InstructionSelector::selectTrunc(MachineInstr &MI) const {
 }
 
 static V810CC::CondCodes PredicateToCC(CmpInst::Predicate Pred) {
+  // Treat ordered and unordered identically on the VB, because we only have the one set of cond codes.
+  // NaNs cause hardware exceptions, so it shouldn't matter anyway. 
   switch (Pred) {
-  default: llvm_unreachable("Unknown integer condition code!");
-  case CmpInst::Predicate::ICMP_EQ:   return V810CC::CC_E;
-  case CmpInst::Predicate::ICMP_NE:   return V810CC::CC_NE;
-  case CmpInst::Predicate::ICMP_UGT:  return V810CC::CC_H;
-  case CmpInst::Predicate::ICMP_UGE:  return V810CC::CC_NC;
-  case CmpInst::Predicate::ICMP_ULT:  return V810CC::CC_C;
-  case CmpInst::Predicate::ICMP_ULE:  return V810CC::CC_NH;
-  case CmpInst::Predicate::ICMP_SGT:  return V810CC::CC_GT;
-  case CmpInst::Predicate::ICMP_SGE:  return V810CC::CC_GE;
-  case CmpInst::Predicate::ICMP_SLT:  return V810CC::CC_LT;
-  case CmpInst::Predicate::ICMP_SLE:  return V810CC::CC_LE;
+  default: llvm_unreachable("Unknown condition code!");
+  case CmpInst::Predicate::FCMP_FALSE:
+    return V810CC::CC_NOP;
+  case CmpInst::Predicate::FCMP_OEQ:
+  case CmpInst::Predicate::FCMP_UEQ:
+  case CmpInst::Predicate::ICMP_EQ:
+    return V810CC::CC_E;
+  case CmpInst::Predicate::FCMP_ONE:
+  case CmpInst::Predicate::FCMP_UNE:
+  case CmpInst::Predicate::ICMP_NE:
+    return V810CC::CC_NE;
+  case CmpInst::Predicate::ICMP_UGT:
+    return V810CC::CC_H;
+  case CmpInst::Predicate::ICMP_UGE:
+    return V810CC::CC_NC;
+  case CmpInst::Predicate::ICMP_ULT:
+    return V810CC::CC_C;
+  case CmpInst::Predicate::ICMP_ULE:
+    return V810CC::CC_NH;
+  case CmpInst::Predicate::FCMP_OGT:
+  case CmpInst::Predicate::FCMP_UGT:
+  case CmpInst::Predicate::ICMP_SGT:
+    return V810CC::CC_GT;
+  case CmpInst::Predicate::FCMP_OGE:
+  case CmpInst::Predicate::FCMP_UGE:
+  case CmpInst::Predicate::ICMP_SGE:
+    return V810CC::CC_GE;
+  case CmpInst::Predicate::FCMP_OLT:
+  case CmpInst::Predicate::FCMP_ULT:
+  case CmpInst::Predicate::ICMP_SLT:
+    return V810CC::CC_LT;
+  case CmpInst::Predicate::FCMP_OLE:
+  case CmpInst::Predicate::FCMP_ULE:
+  case CmpInst::Predicate::ICMP_SLE:
+    return V810CC::CC_LE;
+  case CmpInst::Predicate::FCMP_TRUE:
+    return V810CC::CC_BR;
   }
 }
 
@@ -162,6 +197,125 @@ bool V810InstructionSelector::matchImm(Register Reg, int64_t &Value) const {
     return isInt<Bits>(Value);
   }
   return false;
+}
+
+static bool buildCmpNotZero(MachineIRBuilder &MIB, Register Cond, CmpInst::Predicate &Pred) {
+  MIB.buildInstr(V810::CMPri, {}, {Cond, (int64_t) 0});
+  Pred = CmpInst::Predicate::ICMP_NE;
+  return true;
+}
+
+bool V810InstructionSelector::buildCmpForCond(MachineIRBuilder &MIB, Register Cond, CmpInst::Predicate &Pred) const {
+  using namespace llvm::MIPatternMatch;
+
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+  if (!MRI.hasOneUse(Cond)) {
+    // If the condition variable is used in more than one place, we can't fold it into a CMP.
+    return buildCmpNotZero(MIB, Cond, Pred);
+  }
+
+  MachineInstr *MI = MRI.getVRegDef(Cond);
+
+  Register LHS;
+  Register RHS;
+  if (mi_match(Cond, MRI, m_GICmp(m_Pred(Pred), m_Reg(LHS), m_Reg(RHS)))) {
+    // If we are straight-up comparing two values, generate a CMP and be done with it.
+    int64_t Imm;
+    if (matchImm<5>(RHS, Imm)) {
+      MIB.buildInstr(V810::CMPri, {}, {LHS, Imm});
+    } else if (matchImm<5>(LHS, Imm)) {
+      Pred = CmpInst::getSwappedPredicate(Pred);
+      MIB.buildInstr(V810::CMPri, {}, {RHS, Imm});
+    } else {
+      MIB.buildInstr(V810::CMPrr, {}, {LHS, RHS});
+    }
+    MI->eraseFromParent();
+    return true;
+  } else if (mi_match(Cond, MRI,
+              m_any_of(
+                m_GZExt(m_Reg(LHS)),
+                m_GSExt(m_Reg(LHS)),
+                m_GAnyExt(m_Reg(LHS)),
+                m_GFPExt(m_Reg(LHS)),
+                m_GTrunc(m_Reg(LHS)),
+                m_GFPTrunc(m_Reg(LHS))))) {
+    // ignore truncations and extensions, they don't affect the boolean value
+    if (!buildCmpForCond(MIB, LHS, Pred))
+      return false;
+    MI->eraseFromParent();
+    return true;
+  } else if (mi_match(Cond, MRI, m_GAnd(m_Reg(LHS), m_Reg(RHS)))) {
+    KnownBits LowBit = KB->getKnownBits(RHS).trunc(1);
+    if (LowBit.isZero()) {
+      // If we clear the low bit, this is an "always false" condition
+      MI->eraseFromParent();
+      Pred = CmpInst::Predicate::FCMP_FALSE;
+      return true;
+    } else if (LowBit.isAllOnes()) {
+      // If we don't clear the low bit, this is either a truncation or a no-op.
+      // Either way, it doesn't affect the boolean value, so throw it out.
+      if (!buildCmpForCond(MIB, LHS, Pred))
+        return false;
+      MI->eraseFromParent();
+      return true;
+    } else {
+      // This is a logical AND. Don't try to optimize it out.
+      return buildCmpNotZero(MIB, Cond, Pred);
+    }
+  } else if (mi_match(Cond, MRI, m_GOr(m_Reg(LHS), m_Reg(RHS)))){
+    KnownBits LowBit = KB->getKnownBits(RHS).trunc(1);
+    if (LowBit.isZero()) {
+      // If we don't set the low bit, this is a no-op.
+      if (!buildCmpForCond(MIB, LHS, Pred))
+        return false;
+      MI->eraseFromParent();
+      return true;
+    } else if (LowBit.isAllOnes()) {
+      // If we set the low bit, this is an "always true" condition.
+      MI->eraseFromParent();
+      Pred = CmpInst::Predicate::FCMP_TRUE;
+      return true;
+    } else {
+      // this is a logical OR. Don't try to optimize it out.
+      return buildCmpNotZero(MIB, Cond, Pred);
+    }
+  } else if (mi_match(Cond, MRI, m_GXor(m_Reg(LHS), m_Reg(RHS)))) {
+    KnownBits LowBit = KB->getKnownBits(RHS).trunc(1);
+    if (LowBit.isZero()) {
+      // If we don't toggle the low bit, this is a no-op.
+      if (!buildCmpForCond(MIB, LHS, Pred))
+        return false;
+      MI->eraseFromParent();
+      return true;
+    } else if (LowBit.isAllOnes()) {
+      // If we toggle the low bit, this is a NOT. Optimize it out, but invert the predicate.
+      if (!buildCmpForCond(MIB, LHS, Pred))
+        return false;
+      Pred = CmpInst::getInversePredicate(Pred);
+      MI->eraseFromParent();
+      return true;
+    } else {
+      // this is a logical XOR. Don't try to optimize it out.
+      return buildCmpNotZero(MIB, Cond, Pred);
+    }
+  } else {
+    // This operand isn't a logical operation. We don't know what it is.
+    KnownBits LowBit = KB->getKnownBits(Cond).trunc(1);
+    if (LowBit.isZero()) {
+      // Literal false
+      Pred = CmpInst::Predicate::FCMP_FALSE;
+      MI->eraseFromParent();
+      return true;
+    } else if (LowBit.isAllOnes()) {
+      // Literal true
+      Pred = CmpInst::Predicate::FCMP_TRUE;
+      MI->eraseFromParent();
+      return true;
+    } else {
+      // unknown value
+      return buildCmpNotZero(MIB, Cond, Pred);
+    }
+  }
 }
 
 bool V810InstructionSelector::selectIcmp(MachineInstr &MI) const {
@@ -186,6 +340,22 @@ bool V810InstructionSelector::selectIcmp(MachineInstr &MI) const {
   auto Setf = MIB.buildInstr(V810::SETF, {Dst}, {(int64_t) CC});
   MI.eraseFromParent();
   return constrainSelectedInstRegOperands(*Setf, TII, TRI, RBI);
+}
+
+bool V810InstructionSelector::selectBrcond(MachineInstr &MI) const {
+  Register Cond = MI.getOperand(0).getReg();
+  MachineBasicBlock *MBB = MI.getOperand(1).getMBB();
+
+  MachineIRBuilder MIB(MI);
+  CmpInst::Predicate Pred;
+  if (!buildCmpForCond(MIB, Cond, Pred)) {
+    return false;
+  }
+
+  V810CC::CondCodes CC = PredicateToCC(Pred);
+  MIB.buildInstr(V810::Bcond).addImm(CC).addMBB(MBB);
+  MI.eraseFromParent();
+  return true;
 }
 
 bool V810InstructionSelector::IsGPRelative(const GlobalValue *GVal) const {
@@ -295,6 +465,8 @@ bool V810InstructionSelector::select(MachineInstr &MI) {
       return selectTrunc(MI);
     case TargetOpcode::G_ICMP:
       return selectIcmp(MI);
+    case TargetOpcode::G_BRCOND:
+      return selectBrcond(MI);
     case TargetOpcode::G_GLOBAL_VALUE:
       return selectGlobalValue(MI);
     case TargetOpcode::G_PTR_ADD:

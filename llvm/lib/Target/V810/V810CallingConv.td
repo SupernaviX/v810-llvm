@@ -3,6 +3,7 @@ class CCIfArgIsVarArg<CCAction A>
          "ValNo >= static_cast<V810CCState&>(State).getNumFixedParams()",
          A>;
 
+let Entry = 1 in {
 def CC_V810 : CallingConv<[
   CCIfArgIsVarArg<CCAssignToStack<4, 4>>,
   CCIfType<[i8, i16, i32, f32], CCAssignToReg<[R6, R7, R8, R9]>>,
@@ -12,6 +13,7 @@ def CC_V810 : CallingConv<[
 def RetCC_V810 : CallingConv<[
   CCIfType<[i8, i16, i32, f32], CCAssignToReg<[R10, R11]>>
 ]>;
+}
 
 // Don't mark R3 as callee-saved because it messes up stack frames
 // This is Fine because only stack frame code ever edits that

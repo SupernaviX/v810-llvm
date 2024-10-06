@@ -2,6 +2,7 @@
 #include "V810.h"
 #include "V810MachineFunctionInfo.h"
 #include "MCTargetDesc/V810MCExpr.h"
+#include "V810CallingConv.h"
 #include "V810RegisterInfo.h"
 #include "V810Subtarget.h"
 #include "V810TargetObjectFile.h"
@@ -15,27 +16,12 @@
 
 using namespace llvm;
 
-namespace {
-  class V810CCState : public CCState {
-    unsigned NumFixedParams = 0;
-
-  public:
-    V810CCState(CallingConv::ID CC, bool IsVarArg, MachineFunction &MF,
-                SmallVectorImpl<CCValAssign> &locs, LLVMContext &C,
-                unsigned NumFixedParams)
-        : CCState(CC, IsVarArg, MF, locs, C),
-          NumFixedParams(NumFixedParams) {}
-    unsigned getNumFixedParams() const { return NumFixedParams; }
-  };
-}
-
-#include "V810GenCallingConv.inc"
-
 V810TargetLowering::V810TargetLowering(const TargetMachine &TM,
                                        const V810Subtarget &STI)
     : TargetLowering(TM), Subtarget(&STI) {
 
   setBooleanContents(BooleanContent::ZeroOrOneBooleanContent);  
+  setMaxDivRemBitWidthSupported(32);
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, &V810::GenRegsRegClass);
@@ -966,6 +952,17 @@ EVT V810TargetLowering::getOptimalMemOpType(const MemOp &Op,
 LLT V810TargetLowering::getOptimalMemOpLLT(const MemOp &Op,
                                            const AttributeList &FuncAttributes) const {
   return LLT::scalar(32);
+}
+
+bool V810TargetLowering::allowsMemoryAccess(
+    LLVMContext &Context, const DataLayout &DL, EVT VT, unsigned AddrSpace,
+    Align Alignment, MachineMemOperand::Flags Flags, unsigned *Fast) const {
+  // We specify an alignment for 64-bit accesses, but don't actually support loading/storing them directly.
+  if (VT.bitsGT(MVT::i32)) {
+    return false;
+  }
+  return TargetLoweringBase::allowsMemoryAccess(
+              Context, DL, VT, AddrSpace, Alignment, Flags, Fast);
 }
 
 MachineBasicBlock *

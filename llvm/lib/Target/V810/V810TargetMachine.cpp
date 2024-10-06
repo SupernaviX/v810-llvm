@@ -4,6 +4,11 @@
 #include "V810TargetMachine.h"
 #include "V810TargetObjectFile.h"
 #include "V810TargetTransformInfo.h"
+#include "llvm/CodeGen/GlobalISel/IRTranslator.h"
+#include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
+#include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
+#include "llvm/CodeGen/GlobalISel/Legalizer.h"
+#include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
@@ -13,6 +18,11 @@ using namespace llvm;
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeV810Target() {
   // Register the target.
   RegisterTargetMachine<V810TargetMachine> X(getTheV810Target());
+  auto PR = PassRegistry::getPassRegistry();
+  initializeGlobalISel(*PR);
+  initializeV810PreLegalizerCombinerPass(*PR);
+  initializeV810O0PreLegalizerCombinerPass(*PR);
+  initializeV810PostLegalizerCombinerPass(*PR);
 }
 
 static std::string computeDataLayout(const Triple &T) {
@@ -82,6 +92,12 @@ public:
   bool addInstSelector() override;
   void addPreEmitPass() override;
   void addPreEmitPass2() override;
+  bool addIRTranslator() override;
+  void addPreLegalizeMachineIR() override;
+  bool addLegalizeMachineIR() override;
+  void addPreRegBankSelect() override;
+  bool addRegBankSelect() override;
+  bool addGlobalInstructionSelect() override;
 };
 } // namespace
 
@@ -119,6 +135,39 @@ void V810PassConfig::addPreEmitPass() {
 
 void V810PassConfig::addPreEmitPass2() {
   // addPass(createV810BranchSelectionPass());
+}
+
+bool V810PassConfig::addIRTranslator() {
+  addPass(new IRTranslator(getOptLevel()));
+  return false;
+}
+
+void V810PassConfig::addPreLegalizeMachineIR() {
+  if (getOptLevel() == CodeGenOptLevel::None) {
+    addPass(createV810O0PreLegalizerCombiner());
+  } else {
+    addPass(createV810PreLegalizerCombiner());
+  }
+}
+
+bool V810PassConfig::addLegalizeMachineIR() {
+  addPass(new Legalizer());
+  return false;
+}
+
+void V810PassConfig::addPreRegBankSelect() {
+  if (getOptLevel() != CodeGenOptLevel::None)
+    addPass(createV810PostLegalizerCombiner());
+}
+
+bool V810PassConfig::addRegBankSelect() {
+  addPass(new RegBankSelect());
+  return false;
+}
+
+bool V810PassConfig::addGlobalInstructionSelect() {
+  addPass(new InstructionSelect(getOptLevel()));
+  return false;
 }
 
 V810TargetMachine::~V810TargetMachine() {}

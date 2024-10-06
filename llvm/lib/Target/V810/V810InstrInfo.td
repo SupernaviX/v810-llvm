@@ -19,16 +19,18 @@ def HI16 : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(hi, SDLoc(N), MVT::i32);
 }]>;
 
-def uimm5 : PatLeaf<(imm), [{ return isUInt<5>(N->getZExtValue()); }]>;
-def simm5 : PatLeaf<(imm), [{ return isInt<5>(N->getSExtValue()); }]>;
-def uimm16 : PatLeaf<(imm), [{ return isUInt<16>(N->getZExtValue()); }]>;
-def simm16 : PatLeaf<(imm), [{ return isInt<16>(N->getSExtValue()); }]>;
-def imm32 : PatLeaf<(imm), [{ return isUInt<32>(N->getZExtValue()) || isInt<32>(N->getSExtValue()); }]>;
-def MOVHIimm : PatLeaf<(imm), [{
-  return isShiftedUInt<16, 16>(N->getZExtValue());
+def uimm5 : ImmLeaf<i32, [{ return isUInt<5>(Imm); }]>;
+def simm5 : ImmLeaf<i32, [{ return isInt<5>(Imm); }]>;
+def uimm16 : ImmLeaf<i32, [{ return isUInt<16>(Imm); }]>;
+def simm16 : ImmLeaf<i32, [{ return isInt<16>(Imm); }]>;
+def imm32 : ImmLeaf<i32, [{ return isUInt<32>(Imm) || isInt<32>(Imm); }]>;
+def MOVHIimm : ImmLeaf<i32, [{
+  return isShiftedUInt<16, 16>(Imm);
 }], HI16>;
 
-def ADDRri : ComplexPattern<iPTR, 2, "SelectADDRri", [frameindex], []>;
+def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [frameindex], []>;
+def gi_ADDRri : GIComplexOperandMatcher<s32, "selectAddrRI">,
+                GIComplexPatternEquiv<ADDRri>;
 
 def V810MEMriAsmOperand : AsmOperandClass {
   let Name = "MEMri";
@@ -132,6 +134,12 @@ class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>
   let isPseudo = 1;
   let hasNoSchedulingInfo = 1;
 }
+
+def V810_CMP :
+      Pseudo<(outs),
+             (ins type0:$r2, type0:$r1),
+             "CMP_Pseudo $r2, $r1", []>;
+def : GINodeEquiv<V810_CMP, V810CMP>;
 
 // Conditions
 // Keep this in sync with the values in V810.h
@@ -429,6 +437,9 @@ let Defs = [R30, SR5], Constraints = "$r2 = $r2_", V810_ZFlag = 1, V810_SFlag = 
     [WriteIMul]
   >;
 }
+def : GINodeEquiv<MUL, V810Smullohi>;
+def : GINodeEquiv<MULU, V810Umullohi>;
+
 let Defs = [R30, SR5], Constraints = "$r2 = $r2_", V810_ZFlag = 1, V810_SFlag = 1 in {
   def DIV : FormatI<0b001001,
     (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
@@ -443,6 +454,8 @@ let Defs = [R30, SR5], Constraints = "$r2 = $r2_", V810_ZFlag = 1, V810_SFlag = 
     [WriteIDiv]
   >;
 }
+def : GINodeEquiv<DIV, V810Sdivrem>;
+def : GINodeEquiv<DIVU, V810Udivrem>;
 
 // Float ops
 let Defs = [SR5], V810_ZFlag = 1, V810_SFlag = 1 in {
@@ -507,6 +520,7 @@ let Defs = [SR5], V810_ZFlag = 1, V810_SFlag = 1 in {
     [WriteFPU]
   >;
 }
+def : GINodeEquiv<CMPF_S, V810FCMP>;
 
 let Uses = [SR5], usesCustomInserter = 1 in {
   def SELECT_CC_Int : Pseudo<
@@ -520,6 +534,8 @@ let Uses = [SR5], usesCustomInserter = 1 in {
     [(set f32:$dst, (V810Selectcc f32:$t, f32:$f, imm:$cond))]
   >;
 }
+def : GINodeEquiv<SELECT_CC_Int, V810Selectcc>;
+def : GINodeEquiv<SELECT_CC_Float, V810Selectcc>;
 
 // conditionals
 // V810ISelLowering generates the patterns which these instrs match, when lowering
@@ -541,6 +557,8 @@ let Uses = [SR5] in {
     [WriteALU]
   >;
 }
+def : GINodeEquiv<Bcond, V810Bcond>;
+def : GINodeEquiv<SETF, V810Setf>;
 
 let isTerminator = 1, isBarrier = 1, isBranch = 1 in {
   let isIndirectBranch = 1, r2 = 0 in
@@ -566,6 +584,7 @@ let isTerminator = 1, isBarrier = 1, isBranch = 1 in {
     [WriteBranch]
   >;
 }
+def : GINodeEquiv<JMP, brind>;
 
 // Function call tools
 
@@ -624,6 +643,9 @@ let isCodeGenOnly = 1 in {
     >;
   }
 }
+def : GINodeEquiv<RET, retglue>;
+def : GINodeEquiv<ADJCALLSTACKDOWN, callseq_start>;
+def : GINodeEquiv<ADJCALLSTACKUP, callseq_end>;
 
 def : Pat<(call tglobaladdr:$dst),
           (CALL tglobaladdr:$dst)>;
@@ -637,6 +659,10 @@ def : Pat<(call GenRegs:$dst),
           (CALL_INDIRECT GenRegs:$dst)>;
 def : Pat<(tailcall GenRegs:$dst),
           (TAIL_CALL_INDIRECT GenRegs:$dst)>;
+def : GINodeEquiv<CALL, call>;
+def : GINodeEquiv<CALL_INDIRECT, call>;
+def : GINodeEquiv<TAIL_CALL, tailcall>;
+def : GINodeEquiv<TAIL_CALL_INDIRECT, tailcall>; 
 
 // System stuff
 def LDSR : FormatII<0b011100,
@@ -667,6 +693,7 @@ let r2 = 0, imm = 0 in {
     [WriteBranch]
   >;
 }
+def : GINodeEquiv<RETI, retiglue>;
 
 let isBarrier = 1, isTerminator = 1, r2 = 0 in
 def TRAP : FormatII<0b011000,
@@ -727,6 +754,7 @@ def CAXI : FormatVI<0b111010,
   [(set i32:$r2, (V810Caxi ADDRri:$addr, GenRegs:$rcmp, GenRegs:$rswap))],
   [WriteLoad, WriteStore]
 >;
+def : GINodeEquiv<CAXI, V810Caxi>;
 
 // VB-specific instructions
 let Predicates = [IsNintendo] in {
@@ -839,6 +867,8 @@ def : Pat<(uint_to_fp (assertzext GenRegs:$r1)),
           (CVT_WS GenRegs:$r1)>;
 
 // Make addresses work
+def : GINodeEquiv<MOVEA, V810Lo>;
+def : GINodeEquiv<MOVHI, V810Hi>;
 def : Pat<(V810Lo (V810Hi tglobaladdr:$inhi), tglobaladdr:$inlo),
           (MOVEA (MOVHI (i32 R0), tglobaladdr:$inhi), tglobaladdr:$inlo)>;
 def : Pat<(V810Lo (V810Hi tglobaltlsaddr:$inhi), tglobaltlsaddr:$inlo),

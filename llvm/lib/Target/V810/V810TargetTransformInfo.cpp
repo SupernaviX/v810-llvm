@@ -6,7 +6,7 @@ using namespace llvm;
 
 void V810TTIImpl::getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                           TTI::UnrollingPreferences &UP,
-                                          OptimizationRemarkEmitter *ORE) {
+                                          OptimizationRemarkEmitter *ORE) const {
   // Only unroll loops with VERY small bodies
   UP.Threshold = 3;
 }
@@ -17,7 +17,7 @@ InstructionCost V810TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
                                                  TTI::TargetCostKind CostKind,
                                                  TTI::OperandValueInfo Op1Info,
                                                  TTI::OperandValueInfo Op2Info,
-                                                 const Instruction *I) {
+                                                 const Instruction *I) const {
   switch (Opcode) {
   case Instruction::ICmp:
     return 1;
@@ -32,7 +32,7 @@ InstructionCost V810TTIImpl::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
 }
 
 InstructionCost V810TTIImpl::getIntImmCost(const APInt &Imm, Type *Ty,
-                              TTI::TargetCostKind CostKind) {
+                              TTI::TargetCostKind CostKind) const {
   // Zero register is always free
   if (Imm == 0)
     return TTI::TCC_Free;
@@ -55,7 +55,7 @@ InstructionCost V810TTIImpl::getIntImmCost(const APInt &Imm, Type *Ty,
 InstructionCost V810TTIImpl::getIntImmCostInst(unsigned Opcode, unsigned Idx,
                                                const APInt &Imm, Type *Ty,
                                                TTI::TargetCostKind CostKind,
-                                               Instruction *Inst) {
+                                               Instruction *Inst) const {
   if (Imm == 0)
     return TTI::TCC_Free;
 
@@ -89,7 +89,7 @@ InstructionCost V810TTIImpl::getIntImmCostInst(unsigned Opcode, unsigned Idx,
 
 InstructionCost V810TTIImpl::getIntImmCostIntrin(Intrinsic::ID IID, unsigned Idx,
                                                  const APInt &Imm, Type *Ty,
-                                                 TTI::TargetCostKind CostKind) {
+                                                 TTI::TargetCostKind CostKind) const {
   // no hoist plz
   return TTI::TCC_Free;
 }
@@ -97,7 +97,7 @@ InstructionCost V810TTIImpl::getIntImmCostIntrin(Intrinsic::ID IID, unsigned Idx
 InstructionCost V810TTIImpl::getArithmeticInstrCost(
     unsigned Opcode, Type *Ty, TTI::TargetCostKind CostKind,
     TTI::OperandValueInfo Op1Info, TTI::OperandValueInfo Op2Info,
-    ArrayRef<const Value *> Args, const Instruction *CxtI) {
+    ArrayRef<const Value *> Args, const Instruction *CxtI) const {
   switch (Opcode) {
   // Floats
   case Instruction::FDiv:

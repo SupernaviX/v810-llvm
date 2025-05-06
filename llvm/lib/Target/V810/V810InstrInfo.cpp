@@ -17,7 +17,7 @@ V810InstrInfo::V810InstrInfo()
 
 void V810InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator I, const DebugLoc &DL,
-                                MCRegister DestReg, MCRegister SrcReg,
+                                Register DestReg, Register SrcReg,
                                 bool KillSrc, bool RenamableDest, bool RenamableSrc) const {
   assert(V810::GenRegsRegClass.contains(DestReg, SrcReg));
   if (DestReg == SrcReg) {
@@ -56,7 +56,8 @@ void V810InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                         Register SrcReg, bool isKill, int FrameIndex,
                                         const TargetRegisterClass *RC,
                                         const TargetRegisterInfo *TRI,
-                                        Register VReg) const {
+                                        Register VReg,
+                                        MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
 
@@ -76,7 +77,8 @@ void V810InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                          Register DestReg, int FrameIndex,
                                          const TargetRegisterClass *RC,
                                          const TargetRegisterInfo *TRI,
-                                         Register VReg) const {
+                                         Register VReg,
+                                         MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
   if (I != MBB.end()) DL = I->getDebugLoc();
 

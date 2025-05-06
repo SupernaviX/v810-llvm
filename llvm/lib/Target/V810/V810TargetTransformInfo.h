@@ -25,28 +25,28 @@ public:
 
   void getUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                                TTI::UnrollingPreferences &UP,
-                               OptimizationRemarkEmitter *ORE);
+                               OptimizationRemarkEmitter *ORE) const override;
 
   InstructionCost getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy,
                                      CmpInst::Predicate VecPred,
                                      TTI::TargetCostKind CostKind,
                                      TTI::OperandValueInfo Op1Info = {TTI::OK_AnyValue, TTI::OP_None},
                                      TTI::OperandValueInfo Op2Info = {TTI::OK_AnyValue, TTI::OP_None},
-                                     const Instruction *I = nullptr);
+                                     const Instruction *I = nullptr) const override;
 
   InstructionCost getIntImmCost(const APInt &Imm, Type *Ty,
-                                TTI::TargetCostKind CostKind);
+                                TTI::TargetCostKind CostKind) const override;
   InstructionCost getIntImmCostInst(unsigned Opcode, unsigned Idx, const APInt &Imm, Type *Ty,
-                                    TTI::TargetCostKind CostKind, Instruction *Inst);
+                                    TTI::TargetCostKind CostKind, Instruction *Inst = nullptr) const override;
   InstructionCost getIntImmCostIntrin(Intrinsic::ID IID, unsigned Idx,
                                       const APInt &Imm, Type *Ty,
-                                      TTI::TargetCostKind CostKind);
+                                      TTI::TargetCostKind CostKind) const override;
   InstructionCost getArithmeticInstrCost(
       unsigned Opcode, Type *Ty, TTI::TargetCostKind CostKind,
       TTI::OperandValueInfo Op1Info = {TTI::OK_AnyValue, TTI::OP_None},
       TTI::OperandValueInfo Op2Info = {TTI::OK_AnyValue, TTI::OP_None},
       ArrayRef<const Value *> Args = ArrayRef<const Value *>(),
-      const Instruction *CxtI = nullptr);
+      const Instruction *CxtI = nullptr) const override;
 };
 }
 

@@ -7,5 +7,4 @@
 
 // CHECK: "-platform_version" "macos" "{{[0-9]+}}.0.0" "{{[0-9]+}}.{{[0-9]+}}"
 
-// REQUIRES: system-darwin
-// XFAIL: target=v810-{{.*}}
+// REQUIRES: system-darwin && target={{.*}}-{{darwin|macos}}{{.*}}

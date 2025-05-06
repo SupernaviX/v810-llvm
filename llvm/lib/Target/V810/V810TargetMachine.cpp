@@ -60,7 +60,19 @@ MachineFunctionInfo *V810TargetMachine::createMachineFunctionInfo(
 
 TargetTransformInfo
 V810TargetMachine::getTargetTransformInfo(const Function &F) const {
-  return TargetTransformInfo(V810TTIImpl(this, F));
+  return TargetTransformInfo(std::make_unique<V810TTIImpl>(this, F));
+}
+
+ScheduleDAGInstrs *V810TargetMachine::createMachineScheduler(MachineSchedContext *C) const {
+  ScheduleDAGMILive *DAG = new ScheduleDAGMILive(C, std::make_unique<GenericScheduler>(C));
+  DAG->addMutation(createLoadClusterDAGMutation(DAG->TII, DAG->TRI));
+  return DAG;
+}
+
+ScheduleDAGInstrs *V810TargetMachine::createPostMachineScheduler(MachineSchedContext *C) const {
+  ScheduleDAGMI *DAG = new ScheduleDAGMI(C, std::make_unique<PostGenericScheduler>(C), true);
+  DAG->addMutation(createLoadClusterDAGMutation(DAG->TII, DAG->TRI));
+  return DAG;
 }
 
 namespace {
@@ -75,9 +87,6 @@ public:
     return getTM<V810TargetMachine>();
   }
 
-  ScheduleDAGInstrs *createMachineScheduler(MachineSchedContext *C) const override;
-  ScheduleDAGInstrs *createPostMachineScheduler(MachineSchedContext *C) const override;
-
   void addIRPasses() override;
   bool addInstSelector() override;
   void addPreEmitPass() override;
@@ -87,18 +96,6 @@ public:
 
 TargetPassConfig *V810TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new V810PassConfig(*this, PM);
-}
-
-ScheduleDAGInstrs *V810PassConfig::createMachineScheduler(MachineSchedContext *C) const {
-  ScheduleDAGMILive *DAG = new ScheduleDAGMILive(C, std::make_unique<GenericScheduler>(C));
-  DAG->addMutation(createLoadClusterDAGMutation(DAG->TII, DAG->TRI));
-  return DAG;
-}
-
-ScheduleDAGInstrs *V810PassConfig::createPostMachineScheduler(MachineSchedContext *C) const {
-  ScheduleDAGMI *DAG = new ScheduleDAGMI(C, std::make_unique<PostGenericScheduler>(C), true);
-  DAG->addMutation(createLoadClusterDAGMutation(DAG->TII, DAG->TRI));
-  return DAG;
 }
 
 void V810PassConfig::addIRPasses() {

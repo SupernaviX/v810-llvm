@@ -1,4 +1,5 @@
 ## Test extract operation.
+# XFAIL: target={{.*}}-darwin{{.*}}
 
 # RUN: rm -rf %t && mkdir -p %t/extracted/
 

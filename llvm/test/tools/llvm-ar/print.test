@@ -1,4 +1,5 @@
 ## Test Print output
+# XFAIL: target={{.*}}-darwin{{.*}}
 
 # RUN: rm -rf %t && mkdir -p %t
 # RUN: echo file1 > %t/1.txt

@@ -33,6 +33,9 @@ public:
                             const TargetSubtargetInfo *STI) const override;
 
   TargetTransformInfo getTargetTransformInfo(const Function &F) const override;
+
+  ScheduleDAGInstrs *createMachineScheduler(MachineSchedContext *C) const override;
+  ScheduleDAGInstrs *createPostMachineScheduler(MachineSchedContext *C) const override;
 };
 
 } // end namespace llvm

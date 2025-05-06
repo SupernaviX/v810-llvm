@@ -59,10 +59,6 @@ namespace {
   public:
     V810AsmBackend(Triple::OSType OSType) : MCAsmBackend(endianness::little), OSType(OSType) {}
 
-    unsigned getNumFixupKinds() const override {
-      return V810::NumTargetFixupKinds;
-    }
-
     std::optional<MCFixupKind> getFixupKind(StringRef Name) const override {
       unsigned Type;
       Type = llvm::StringSwitch<unsigned>(Name)
@@ -79,7 +75,7 @@ namespace {
       return static_cast<MCFixupKind>(FirstLiteralRelocationKind + Type);
     }
 
-    const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override {
+    MCFixupKindInfo getFixupKindInfo(MCFixupKind Kind) const override {
       const static MCFixupKindInfo Infos[V810::NumTargetFixupKinds] = {
         // name                  offset bits  flags
         { "fixup_v810_lo",       16,    16,   0 },
@@ -93,7 +89,7 @@ namespace {
         return MCAsmBackend::getFixupKindInfo(FK_NONE);
       if (Kind < FirstTargetFixupKind)
         return MCAsmBackend::getFixupKindInfo(Kind);
-      assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
+      assert(unsigned(Kind - FirstTargetFixupKind) < V810::NumTargetFixupKinds &&
              "Invalid kind!");
       return Infos[Kind - FirstTargetFixupKind];
     }

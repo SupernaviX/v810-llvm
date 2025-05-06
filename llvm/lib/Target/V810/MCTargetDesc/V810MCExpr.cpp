@@ -45,13 +45,8 @@ V810::Fixups V810MCExpr::getFixupKind(V810MCExpr::VariantKind Kind) {
 
 bool
 V810MCExpr::evaluateAsRelocatableImpl(MCValue &Res,
-                                      const MCAssembler *Asm,
-                                      const MCFixup *Fixup) const {
-  return getSubExpr()->evaluateAsRelocatable(Res, Asm, Fixup);  
-}
-
-void V810MCExpr::fixELFSymbolsInTLSFixups(MCAssembler &Asm) const {
-  // don't think I need to do anything here
+                                      const MCAssembler *Asm) const {
+  return getSubExpr()->evaluateAsRelocatable(Res, Asm);  
 }
 
 void V810MCExpr::visitUsedExpr(MCStreamer &Streamer) const {

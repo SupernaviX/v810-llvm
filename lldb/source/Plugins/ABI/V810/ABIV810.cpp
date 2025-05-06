@@ -140,27 +140,25 @@ ABIV810::GetReturnValueObjectImpl(lldb_private::Thread &thread,
   llvm_unreachable("GetReturnValueObjectImpl not implemented");
 }
 
-bool
-ABIV810::CreateFunctionEntryUnwindPlan(lldb_private::UnwindPlan &unwind_plan) {
-  return false;
+UnwindPlanSP
+ABIV810::CreateFunctionEntryUnwindPlan() {
+  return nullptr;
 }
 
-bool
-ABIV810::CreateDefaultUnwindPlan(lldb_private::UnwindPlan &unwind_plan) {
-  unwind_plan.Clear();
-  unwind_plan.SetRegisterKind(eRegisterKindDWARF);
+UnwindPlanSP
+ABIV810::CreateDefaultUnwindPlan() {
+  UnwindPlan::Row row;
 
-  UnwindPlan::RowSP row(new UnwindPlan::Row);
+  row.GetCFAValue().SetIsRegisterDereferenced(dwarf_r2);
+  row.SetRegisterLocationToAtCFAPlusOffset(dwarf_r31, 0, true);
 
-  row->GetCFAValue().SetIsRegisterDereferenced(dwarf_r2);
-  row->SetRegisterLocationToAtCFAPlusOffset(dwarf_r31, 0, true);
-
-  unwind_plan.AppendRow(row);
-  unwind_plan.SetSourceName("v810 default unwind plan");
-  unwind_plan.SetSourcedFromCompiler(eLazyBoolNo);
-  unwind_plan.SetUnwindPlanValidAtAllInstructions(eLazyBoolNo);
-  unwind_plan.SetUnwindPlanForSignalTrap(eLazyBoolNo);
-  return true;
+  auto plan_sp = std::make_shared<UnwindPlan>(eRegisterKindDWARF);
+  plan_sp->AppendRow(row);
+  plan_sp->SetSourceName("v810 default unwind plan");
+  plan_sp->SetSourcedFromCompiler(eLazyBoolNo);
+  plan_sp->SetUnwindPlanValidAtAllInstructions(eLazyBoolNo);
+  plan_sp->SetUnwindPlanForSignalTrap(eLazyBoolNo);
+  return plan_sp;
 }
 
 ABISP

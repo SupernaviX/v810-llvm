@@ -7613,8 +7613,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.addOptOutFlag(CmdArgs, options::OPT_fgnu_inline_asm,
                      options::OPT_fno_gnu_inline_asm);
 
-  handleVectorizeLoopsArgs(Args, CmdArgs);
-  handleVectorizeSLPArgs(Args, CmdArgs);
+  if (Triple.getArch() != llvm::Triple::v810) {
+    handleVectorizeLoopsArgs(Args, CmdArgs);
+    handleVectorizeSLPArgs(Args, CmdArgs);  
+  }
   ParseMPreferVectorWidth(D, Args, CmdArgs);
 
   Args.AddLastArg(CmdArgs, options::OPT_fshow_overloads_EQ);

@@ -85,7 +85,7 @@ namespace {
         { "fixup_v810_26_pcrel", 0,     32,   MCFixupKindInfo::FKF_IsPCRel }
       };
 
-      if (Kind >= FirstLiteralRelocationKind)
+      if (mc::isRelocation(Kind))
         return MCAsmBackend::getFixupKindInfo(FK_NONE);
       if (Kind < FirstTargetFixupKind)
         return MCAsmBackend::getFixupKindInfo(Kind);
@@ -98,7 +98,7 @@ namespace {
                     const MCValue &Target, MutableArrayRef<char> Data,
                     uint64_t Value, bool IsResolved,
                     const MCSubtargetInfo *STI) const override {
-      if (Fixup.getKind() >= FirstLiteralRelocationKind)
+      if (mc::isRelocation(Fixup.getKind()))
         return;
       Value = adjustFixupValue(Fixup, Value, Asm.getContext());
       if (!Value) return; // Doesn't change encoding
@@ -117,7 +117,7 @@ namespace {
 
       // For each byte of the fragment that the fixup touches, mask in the
       // bits from the fixup value.
-      for (unsigned i = 0; i < NumBytes; ++i) {
+      for (int i = 0; i < NumBytes; ++i) {
         uint8_t mask = (((Value >> (i * 8)) & 0xff));
         Data[Offset + i] |= mask;
       }

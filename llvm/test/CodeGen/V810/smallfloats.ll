@@ -7,7 +7,7 @@ define half @guh(ptr %huh) {
 ; CHECK-NEXT:    add -4, r3
 ; CHECK-NEXT:    in.h 0[r6], r6
 ; CHECK-NEXT:    st.w r31, 0[r3] # 4-byte Folded Spill
-; CHECK-NEXT:    jal __gnu_h2f_ieee
+; CHECK-NEXT:    jal __extendhfsf2
 ; CHECK-NEXT:    ld.w 0[r3], r31 # 4-byte Folded Reload
 ; CHECK-NEXT:    add 4, r3
 ; CHECK-NEXT:    jmp [r31]
@@ -20,7 +20,7 @@ define i16 @convertToF16(float %a) {
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    add -4, r3
 ; CHECK-NEXT:    st.w r31, 0[r3] # 4-byte Folded Spill
-; CHECK-NEXT:    jal __gnu_f2h_ieee
+; CHECK-NEXT:    jal __truncsfhf2
 ; CHECK-NEXT:    andi 65535, r10, r10
 ; CHECK-NEXT:    ld.w 0[r3], r31 # 4-byte Folded Reload
 ; CHECK-NEXT:    add 4, r3
@@ -34,7 +34,7 @@ define float @convertFromF16(i16 %a) {
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    add -4, r3
 ; CHECK-NEXT:    st.w r31, 0[r3] # 4-byte Folded Spill
-; CHECK-NEXT:    jal __gnu_h2f_ieee
+; CHECK-NEXT:    jal __extendhfsf2
 ; CHECK-NEXT:    ld.w 0[r3], r31 # 4-byte Folded Reload
 ; CHECK-NEXT:    add 4, r3
 ; CHECK-NEXT:    jmp [r31]

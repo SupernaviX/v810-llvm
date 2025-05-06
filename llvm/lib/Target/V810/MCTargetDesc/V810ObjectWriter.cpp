@@ -22,8 +22,8 @@ unsigned V810ObjectWriter::getRelocType(MCContext &Ctx,
                                         const MCFixup &Fixup,
                                         bool IsPCRel) const {
   MCFixupKind Kind = Fixup.getKind();
-  if (Kind >= FirstLiteralRelocationKind)
-    return Kind - FirstLiteralRelocationKind;
+  if (mc::isRelocation(Kind))
+    return Kind;
 
   if (IsPCRel) {
     switch(Fixup.getTargetKind()) {

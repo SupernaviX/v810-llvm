@@ -606,6 +606,7 @@ static bool supportsV810(uint64_t Type) {
   case ELF::R_V810_DISP32:
   case ELF::R_V810_LO:
   case ELF::R_V810_HI:
+  case ELF::R_V810_HI_S:
   case ELF::R_V810_SDAOFF:
   case ELF::R_V810_9_PCREL:
   case ELF::R_V810_26_PCREL:

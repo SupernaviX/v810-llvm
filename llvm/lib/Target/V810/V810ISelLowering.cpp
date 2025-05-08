@@ -126,6 +126,8 @@ V810TargetLowering::V810TargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::FABS, MVT::f32, Expand);
   setOperationAction(ISD::FCOS, MVT::f32, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f32, Expand);
+  setOperationAction(ISD::FMA, MVT::f32, Expand);
+  setOperationAction(ISD::FMAD, MVT::f32, Expand);
   setOperationAction(ISD::FNEG, MVT::f32, Expand);
   setOperationAction(ISD::FREM, MVT::f32, Expand);
   setOperationAction(ISD::FSIN, MVT::f32, Expand);

@@ -101,6 +101,8 @@ DecodeStatus V810Disassembler::getInstruction(MCInst &Instr, uint64_t &Size,
                                               ArrayRef<uint8_t> Bytes,
                                               uint64_t Address,
                                               raw_ostream &CStream) const {
+  CommentStream = &CStream;
+  
   if (Bytes.size() < 2) {
     Size = 0;
     return DecodeStatus::Fail;

@@ -6,7 +6,6 @@
 ; XFAIL: target=nvptx{{.*}}
 ; XFAIL: target=sparc{{.*}}
 ; XFAIL: target=hexagon-{{.*}}
-; XFAIL: target=v810{{.*}}
 
 ; RUN: llc < %s -O3 -global-isel=0 -fast-isel=0
 ; RUN: llc < %s -O3 -global-isel=1 -fast-isel=0

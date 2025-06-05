@@ -21,6 +21,15 @@ void LowerV810MachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
 
 void initializeV810BSelPass(PassRegistry &);
 void initializeV810DAGToDAGISelLegacyPass(PassRegistry &);
+
+FunctionPass *createV810PreLegalizerCombiner();
+void initializeV810PreLegalizerCombinerPass(PassRegistry &);
+
+FunctionPass *createV810O0PreLegalizerCombiner();
+void initializeV810O0PreLegalizerCombinerPass(PassRegistry &);
+
+FunctionPass *createV810PostLegalizerCombiner();
+void initializeV810PostLegalizerCombinerPass(PassRegistry &);
 }
 
 namespace llvm {

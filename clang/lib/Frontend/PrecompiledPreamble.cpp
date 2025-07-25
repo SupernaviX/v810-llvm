@@ -293,8 +293,9 @@ class PrecompilePreambleConsumer : public PCHGenerator {
 public:
   PrecompilePreambleConsumer(PrecompilePreambleAction &Action, Preprocessor &PP,
                              ModuleCache &ModCache, StringRef isysroot,
-                             std::shared_ptr<PCHBuffer> Buffer)
-      : PCHGenerator(PP, ModCache, "", isysroot, std::move(Buffer),
+                             std::shared_ptr<PCHBuffer> Buffer,
+                             const CodeGenOptions &CodeGenOpts)
+      : PCHGenerator(PP, ModCache, "", isysroot, std::move(Buffer), CodeGenOpts,
                      ArrayRef<std::shared_ptr<ModuleFileExtension>>(),
                      /*AllowASTWithErrors=*/true),
         Action(Action) {}
@@ -337,7 +338,8 @@ PrecompilePreambleAction::CreateASTConsumer(CompilerInstance &CI,
     Sysroot.clear();
 
   return std::make_unique<PrecompilePreambleConsumer>(
-      *this, CI.getPreprocessor(), CI.getModuleCache(), Sysroot, Buffer);
+      *this, CI.getPreprocessor(), CI.getModuleCache(), Sysroot, Buffer,
+      CI.getCodeGenOpts());
 }
 
 template <class T> bool moveOnNoError(llvm::ErrorOr<T> Val, T &Output) {
@@ -512,7 +514,7 @@ llvm::ErrorOr<PrecompiledPreamble> PrecompiledPreamble::Build(
       std::move(Buffer),
       /*WritePCHFile=*/Storage->getKind() == PCHStorage::Kind::TempFile,
       Callbacks);
-  if (!Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0]))
+  if (!Act->BeginSourceFile(*Clang, Clang->getFrontendOpts().Inputs[0]))
     return BuildPreambleError::BeginSourceFileFailed;
 
   // Performed after BeginSourceFile to ensure Clang->Preprocessor can be

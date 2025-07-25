@@ -82,7 +82,9 @@ add_header(union_sigval HDR union_sigval.h)
 add_header(siginfo_t HDR siginfo_t.h DEPENDS .union_sigval .pid_t .uid_t .clock_t)
 add_header(sig_atomic_t HDR sig_atomic_t.h)
 add_header(sigset_t HDR sigset_t.h DEPENDS libc.include.llvm-libc-macros.signal_macros)
-add_header(jmp_buf HDR jmp_buf.h DEPENDS .sigset_t)
+add_header(__jmp_buf HDR __jmp_buf.h DEPENDS .sigset_t)
+add_header(jmp_buf HDR jmp_buf.h DEPENDS .__jmp_buf)
+add_header(sigjmp_buf HDR sigjmp_buf.h DEPENDS .__jmp_buf)
 add_header(struct_sigaction HDR struct_sigaction.h DEPENDS .sigset_t .siginfo_t)
 add_header(struct_timespec HDR struct_timespec.h DEPENDS .time_t)
 add_header(
@@ -186,7 +188,7 @@ add_header(EFI_HANDLE HDR EFI_HANDLE.h)
 add_header(EFI_TIME HDR EFI_TIME.h DEPENDS libc.include.llvm-libc-macros.stdint_macros)
 add_header(EFI_TIMER_DELAY HDR EFI_TIMER_DELAY.h)
 add_header(EFI_TPL HDR EFI_TPL.h DEPENDS .size_t)
-add_header(EFI_STATUS HDR EFI_STATUS.h DEPENDS .size_t)
+add_header(EFI_STATUS HDR EFI_STATUS.h DEPENDS libc.include.llvm-libc-macros.stdint_macros)
 
 add_header(EFI_OPEN_PROTOCOL_INFORMATION_ENTRY
   HDR

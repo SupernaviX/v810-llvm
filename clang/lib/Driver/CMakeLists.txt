@@ -52,6 +52,7 @@ add_clang_library(clangDriver
   ToolChains/CrossWindows.cpp
   ToolChains/CSKYToolChain.cpp
   ToolChains/Cuda.cpp
+  ToolChains/Cygwin.cpp
   ToolChains/Darwin.cpp
   ToolChains/DragonFly.cpp
   ToolChains/Flang.cpp
@@ -66,16 +67,15 @@ add_clang_library(clangDriver
   ToolChains/HLSL.cpp
   ToolChains/Hurd.cpp
   ToolChains/Linux.cpp
+  ToolChains/Managarm.cpp
   ToolChains/MipsLinux.cpp
   ToolChains/MinGW.cpp
   ToolChains/MSP430.cpp
   ToolChains/MSVC.cpp
-  ToolChains/NaCl.cpp
   ToolChains/NetBSD.cpp
   ToolChains/OHOS.cpp
   ToolChains/OpenBSD.cpp
   ToolChains/PS4CPU.cpp
-  ToolChains/RISCVToolchain.cpp
   ToolChains/Solaris.cpp
   ToolChains/SPIRV.cpp
   ToolChains/SPIRVOpenMP.cpp

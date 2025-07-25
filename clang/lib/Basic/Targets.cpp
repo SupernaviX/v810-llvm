@@ -29,7 +29,6 @@
 #include "Targets/Mips.h"
 #include "Targets/NVPTX.h"
 #include "Targets/OSTargets.h"
-#include "Targets/PNaCl.h"
 #include "Targets/PPC.h"
 #include "Targets/RISCV.h"
 #include "Targets/SPIR.h"
@@ -165,6 +164,9 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
         return std::make_unique<OHOSTargetInfo<AArch64leTargetInfo>>(Triple,
                                                                      Opts);
       }
+    case llvm::Triple::Managarm:
+      return std::make_unique<ManagarmTargetInfo<AArch64leTargetInfo>>(Triple,
+                                                                       Opts);
     case llvm::Triple::NetBSD:
       return std::make_unique<NetBSDTargetInfo<AArch64leTargetInfo>>(Triple,
                                                                      Opts);
@@ -226,8 +228,6 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
       return std::make_unique<RTEMSTargetInfo<ARMleTargetInfo>>(Triple, Opts);
     case llvm::Triple::Haiku:
       return std::make_unique<HaikuTargetInfo<ARMleTargetInfo>>(Triple, Opts);
-    case llvm::Triple::NaCl:
-      return std::make_unique<NaClTargetInfo<ARMleTargetInfo>>(Triple, Opts);
     case llvm::Triple::Win32:
       switch (Triple.getEnvironment()) {
       case llvm::Triple::Cygnus:
@@ -258,8 +258,6 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
       return std::make_unique<NetBSDTargetInfo<ARMbeTargetInfo>>(Triple, Opts);
     case llvm::Triple::RTEMS:
       return std::make_unique<RTEMSTargetInfo<ARMbeTargetInfo>>(Triple, Opts);
-    case llvm::Triple::NaCl:
-      return std::make_unique<NaClTargetInfo<ARMbeTargetInfo>>(Triple, Opts);
     default:
       return std::make_unique<ARMbeTargetInfo>(Triple, Opts);
     }
@@ -302,9 +300,6 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
       return std::make_unique<FreeBSDTargetInfo<MipsTargetInfo>>(Triple, Opts);
     case llvm::Triple::NetBSD:
       return std::make_unique<NetBSDTargetInfo<MipsTargetInfo>>(Triple, Opts);
-    case llvm::Triple::NaCl:
-      return std::make_unique<NaClTargetInfo<NaClMips32TargetInfo>>(Triple,
-                                                                    Opts);
     case llvm::Triple::Win32:
       switch (Triple.getEnvironment()) {
       case llvm::Triple::GNU:
@@ -467,6 +462,9 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
         return std::make_unique<OHOSTargetInfo<RISCV64TargetInfo>>(Triple,
                                                                    Opts);
       }
+    case llvm::Triple::Managarm:
+      return std::make_unique<ManagarmTargetInfo<RISCV64TargetInfo>>(Triple,
+                                                                     Opts);
     default:
       return std::make_unique<RISCV64TargetInfo>(Triple, Opts);
     }
@@ -586,8 +584,6 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
       return std::make_unique<HaikuX86_32TargetInfo>(Triple, Opts);
     case llvm::Triple::RTEMS:
       return std::make_unique<RTEMSX86_32TargetInfo>(Triple, Opts);
-    case llvm::Triple::NaCl:
-      return std::make_unique<NaClTargetInfo<X86_32TargetInfo>>(Triple, Opts);
     case llvm::Triple::ELFIAMCU:
       return std::make_unique<MCUX86_32TargetInfo>(Triple, Opts);
     case llvm::Triple::Hurd:
@@ -647,14 +643,15 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
     }
     case llvm::Triple::Haiku:
       return std::make_unique<HaikuTargetInfo<X86_64TargetInfo>>(Triple, Opts);
-    case llvm::Triple::NaCl:
-      return std::make_unique<NaClTargetInfo<X86_64TargetInfo>>(Triple, Opts);
     case llvm::Triple::PS4:
       return std::make_unique<PS4OSTargetInfo<X86_64TargetInfo>>(Triple, Opts);
     case llvm::Triple::PS5:
       return std::make_unique<PS5OSTargetInfo<X86_64TargetInfo>>(Triple, Opts);
     case llvm::Triple::Hurd:
       return std::make_unique<HurdTargetInfo<X86_64TargetInfo>>(Triple, Opts);
+    case llvm::Triple::Managarm:
+      return std::make_unique<ManagarmTargetInfo<X86_64TargetInfo>>(Triple,
+                                                                    Opts);
     default:
       return std::make_unique<X86_64TargetInfo>(Triple, Opts);
     }
@@ -763,6 +760,9 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
       }
     case llvm::Triple::FreeBSD:
       return std::make_unique<FreeBSDTargetInfo<LoongArch64TargetInfo>>(Triple,
+                                                                        Opts);
+    case llvm::Triple::OpenBSD:
+      return std::make_unique<OpenBSDTargetInfo<LoongArch64TargetInfo>>(Triple,
                                                                         Opts);
     default:
       return std::make_unique<LoongArch64TargetInfo>(Triple, Opts);

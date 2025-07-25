@@ -959,7 +959,8 @@ EVT V810TargetLowering::getSetCCResultType(const DataLayout &DL, LLVMContext &Co
   return VT.changeVectorElementTypeToInteger();
 }
 
-EVT V810TargetLowering::getOptimalMemOpType(const MemOp &Op,
+EVT V810TargetLowering::getOptimalMemOpType(LLVMContext &Context,
+                                            const MemOp &Op,
                                             const AttributeList &FuncAttributes) const {
   return MVT::i32;
 }

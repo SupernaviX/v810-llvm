@@ -72,6 +72,17 @@ void V810MCCodeEmitter::encodeInstruction(const MCInst &MI, SmallVectorImpl<char
   }
 }
 
+static void addFixup(SmallVectorImpl<MCFixup> &Fixups, uint32_t Offset,
+                     const MCExpr *Value, uint16_t Kind) {
+  bool PCRel = false;
+  switch (Kind) {
+    case V810::fixup_v810_9_pcrel:
+    case V810::fixup_v810_26_pcrel:
+      PCRel = true;
+  }
+  Fixups.push_back(MCFixup::create(Offset, Value, Kind, PCRel));
+}
+
 unsigned V810MCCodeEmitter::
 getMachineOpValue(const MCInst &MI, const MCOperand &MO,
                   SmallVectorImpl<MCFixup> &Fixups,
@@ -88,7 +99,7 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   const MCExpr *Expr = MO.getExpr();
   if (const V810MCExpr *VExpr = dyn_cast<V810MCExpr>(Expr)) {
     MCFixupKind Kind = (MCFixupKind)VExpr->getFixupKind();
-    Fixups.push_back(MCFixup::create(0, Expr, Kind, MI.getLoc()));
+    addFixup(Fixups, 0, Expr, Kind);
     return 0;
   }
 
@@ -108,9 +119,7 @@ getBranchTargetOpValue(const MCInst &MI, unsigned OpNo,
   if (MO.isReg() || MO.isImm())
     return getMachineOpValue(MI, MO, Fixups, STI);
   
-  Fixups.push_back(MCFixup::create(0, MO.getExpr(),
-                                  (MCFixupKind)V810::fixup_v810_26_pcrel,
-                                  MI.getLoc()));
+  addFixup(Fixups, 0, MO.getExpr(), V810::fixup_v810_26_pcrel);
   return 0;
 }
 
@@ -122,9 +131,7 @@ getBcondTargetOpValue(const MCInst &MI, unsigned OpNo,
   if (MO.isReg() || MO.isImm())
     return getMachineOpValue(MI, MO, Fixups, STI);
   
-  Fixups.push_back(MCFixup::create(0, MO.getExpr(),
-                                  (MCFixupKind)V810::fixup_v810_9_pcrel,
-                                  MI.getLoc()));
+  addFixup(Fixups, 0, MO.getExpr(), V810::fixup_v810_9_pcrel);
   return 0;
 }
 

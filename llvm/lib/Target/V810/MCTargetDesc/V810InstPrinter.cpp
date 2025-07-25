@@ -1,4 +1,5 @@
 #include "V810InstPrinter.h"
+#include "V810MCAsmInfo.h"
 #include "V810.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -69,7 +70,7 @@ void V810InstPrinter::printOperand(const MCInst *MI, int opNum,
   }
 
   assert(MO.isExpr() && "Unknown operand kind in printOperand");
-  MO.getExpr()->print(O, &MAI);
+  MAI.printExpr(O, *MO.getExpr());
 }
 
 template <unsigned N>
@@ -90,7 +91,7 @@ void V810InstPrinter::printBranchOperand(const MCInst *MI, uint64_t Address,
   }
 
   assert(MO.isExpr() && "not expr?");
-  MO.getExpr()->print(O, &MAI);
+  MAI.printExpr(O, *MO.getExpr());
 }
 
 void V810InstPrinter::printMemOperand(const MCInst *MI, int opNum,

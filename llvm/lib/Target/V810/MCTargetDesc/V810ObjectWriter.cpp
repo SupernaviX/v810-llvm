@@ -12,21 +12,20 @@ namespace {
       : MCELFObjectTargetWriter(false, OSABI, ELF::EM_V810, true) {}
     ~V810ObjectWriter() override = default;
   protected:
-    unsigned getRelocType(MCContext &Ctx, const MCValue &Target,
-                          const MCFixup &Fixup, bool IsPCRel) const override;
+    unsigned getRelocType(const MCFixup &Fixup, const MCValue &Target,
+                          bool IsPCRel) const override;
   };
 }
 
-unsigned V810ObjectWriter::getRelocType(MCContext &Ctx,
+unsigned V810ObjectWriter::getRelocType(const MCFixup &Fixup,
                                         const MCValue &Target,
-                                        const MCFixup &Fixup,
                                         bool IsPCRel) const {
   MCFixupKind Kind = Fixup.getKind();
   if (mc::isRelocation(Kind))
     return Kind;
 
   if (IsPCRel) {
-    switch(Fixup.getTargetKind()) {
+    switch(Fixup.getKind()) {
     default:
       llvm_unreachable("Unimplemented fixup -> relocation");
     case FK_NONE:                   return ELF::R_V810_NONE;
@@ -39,7 +38,7 @@ unsigned V810ObjectWriter::getRelocType(MCContext &Ctx,
 
   }
   
-  switch(Fixup.getTargetKind()) {
+  switch(Fixup.getKind()) {
   default:
     llvm_unreachable("Unimplemented fixup -> relocation");
   case FK_NONE:                   return ELF::R_V810_NONE;

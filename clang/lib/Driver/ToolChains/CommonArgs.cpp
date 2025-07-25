@@ -603,6 +603,8 @@ const char *tools::getLDMOption(const llvm::Triple &T, const ArgList &Args) {
     if (T.isX32())
       return "elf32_x86_64";
     return "elf_x86_64";
+  case llvm::Triple::v810:
+    return "elf32_v810";
   case llvm::Triple::ve:
     return "elf64ve";
   case llvm::Triple::csky:

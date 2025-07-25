@@ -1,3 +1,4 @@
+#include "V810MCAsmInfo.h"
 #include "V810MCExpr.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
@@ -16,7 +17,7 @@ void V810MCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
   bool parens = printVariantKind(OS, Kind);
   
   if (parens) OS << '(';
-  getSubExpr()->print(OS, MAI);
+  MAI->printExpr(OS, *Expr);
   if (parens) OS << ')';
 }
 

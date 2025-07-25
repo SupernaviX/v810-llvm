@@ -5,7 +5,6 @@
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -30,7 +29,7 @@ static void checkOffsetInRange(const MCFixup &Fixup, int64_t Value,
 
 static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
                                  MCContext &Ctx) {
-  switch (Fixup.getTargetKind()) {
+  switch (Fixup.getKind()) {
   default:
     llvm_unreachable("Unknown fixup kind!");
   case FK_Data_1:
@@ -81,8 +80,8 @@ namespace {
         { "fixup_v810_lo",       16,    16,   0 },
         { "fixup_v810_hi",       16,    16,   0 },
         { "fixup_v810_sdaoff",   16,    16,   0 },
-        { "fixup_v810_9_pcrel",  0,     16,   MCFixupKindInfo::FKF_IsPCRel },
-        { "fixup_v810_26_pcrel", 0,     32,   MCFixupKindInfo::FKF_IsPCRel }
+        { "fixup_v810_9_pcrel",  0,     16,   0 },
+        { "fixup_v810_26_pcrel", 0,     32,   0 }
       };
 
       if (mc::isRelocation(Kind))
@@ -94,13 +93,13 @@ namespace {
       return Infos[Kind - FirstTargetFixupKind];
     }
 
-    void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+    void applyFixup(const MCFragment &F, const MCFixup &Fixup,
                     const MCValue &Target, MutableArrayRef<char> Data,
-                    uint64_t Value, bool IsResolved,
-                    const MCSubtargetInfo *STI) const override {
-      if (mc::isRelocation(Fixup.getKind()))
+                    uint64_t Value, bool IsResolved) override {
+      maybeAddReloc(F, Fixup, Target, Value, IsResolved);
+      if (!IsResolved)
         return;
-      Value = adjustFixupValue(Fixup, Value, Asm.getContext());
+      Value = adjustFixupValue(Fixup, Value, getContext());
       if (!Value) return; // Doesn't change encoding
       
       MCFixupKindInfo Info = getFixupKindInfo(Fixup.getKind());

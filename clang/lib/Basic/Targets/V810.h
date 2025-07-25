@@ -19,9 +19,13 @@ public:
     : TargetInfo(Triple) {
       resetDataLayout("e-p:32:32-i32:32-i64:32-f32:32-a:0:32-n32:32-S32");
       MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 32;
+      DoubleWidth = 64;
       DoubleAlign = 32;
+      DoubleFormat = &llvm::APFloat::IEEEdouble();
       LongAccumAlign = 32;
+      LongDoubleWidth = 64;
       LongDoubleAlign = 32;
+      LongDoubleFormat = &llvm::APFloat::IEEEdouble();
       LongLongAlign = 32;
       SuitableAlign = 32;
       NewAlign = 32;

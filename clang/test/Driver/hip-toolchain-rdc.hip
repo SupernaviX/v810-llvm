@@ -164,22 +164,22 @@
 
 // Check -flto-partitions
 
-// RUN: %clang -### -fgpu-rdc --offload-arch=gfx90a -nogpulib -nogpuinc --no-offload-new-driver \
+// RUN: %clang --target=x86_64-linux-gnu -### -fgpu-rdc --offload-arch=gfx90a -nogpulib -nogpuinc --no-offload-new-driver \
 // RUN:   -L. -foffload-lto %s 2>&1 | FileCheck -check-prefix=LTO_DEFAULT %s
 // LTO_DEFAULT: lld{{.*}}"--lto-partitions=8"
 
-// RUN: %clang -### -fgpu-rdc --offload-arch=gfx90a -nogpulib -nogpuinc --offload-new-driver \
+// RUN: %clang --target=x86_64-linux-gnu -### -fgpu-rdc --offload-arch=gfx90a -nogpulib -nogpuinc --offload-new-driver \
 // RUN:   -L. -foffload-lto %s 2>&1 | FileCheck -check-prefix=LTO_DEFAULT_NEW %s
 // LTO_DEFAULT_NEW: clang-linker-wrapper{{.*}}"--device-compiler=amdgcn-amd-amdhsa=-flto-partitions=8"
 
-// RUN: %clang -### -fgpu-rdc --offload-arch=gfx90a -nogpulib -nogpuinc --no-offload-new-driver \
+// RUN: %clang --target=x86_64-linux-gnu -### -fgpu-rdc --offload-arch=gfx90a -nogpulib -nogpuinc --no-offload-new-driver \
 // RUN:   -L. -foffload-lto -flto-partitions=42 %s 2>&1 | FileCheck -check-prefix=LTO_PARTS %s
 // LTO_PARTS: lld{{.*}}"--lto-partitions=42"
 
-// RUN: not %clang -### -fgpu-rdc --offload-arch=gfx90a -nogpulib -nogpuinc --no-offload-new-driver \
+// RUN: not %clang --target=x86_64-linux-gnu -### -fgpu-rdc --offload-arch=gfx90a -nogpulib -nogpuinc --no-offload-new-driver \
 // RUN:   -L. -foffload-lto -flto-partitions=a %s 2>&1 | FileCheck -check-prefix=LTO_PARTS_INV0 %s
 // LTO_PARTS_INV0: clang: error: invalid integral value 'a' in '-flto-partitions=a'
 
-// RUN: not %clang -### -fgpu-rdc --offload-arch=gfx90a -nogpulib -nogpuinc --no-offload-new-driver \
+// RUN: not %clang --target=x86_64-linux-gnu -### -fgpu-rdc --offload-arch=gfx90a -nogpulib -nogpuinc --no-offload-new-driver \
 // RUN:   -L. -foffload-lto -flto-partitions=0 %s 2>&1 | FileCheck -check-prefix=LTO_PARTS_INV1 %s
 // LTO_PARTS_INV1: clang: error: invalid integral value '0' in '-flto-partitions=0'

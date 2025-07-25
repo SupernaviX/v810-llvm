@@ -75,7 +75,7 @@ namespace llvm {
     EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
                            EVT VT) const override;
 
-    EVT getOptimalMemOpType(const MemOp &Op,
+    EVT getOptimalMemOpType(LLVMContext &Context, const MemOp &Op,
                             const AttributeList &FuncAttributes) const override;
 
     LLT getOptimalMemOpLLT(const MemOp &Op,

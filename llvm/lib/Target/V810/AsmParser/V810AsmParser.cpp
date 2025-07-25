@@ -1,4 +1,5 @@
 #include "V810.h"
+#include "MCTargetDesc/V810MCAsmInfo.h"
 #include "MCTargetDesc/V810MCExpr.h"
 #include "MCTargetDesc/V810MCTargetDesc.h"
 #include "TargetInfo/V810TargetInfo.h"
@@ -9,7 +10,6 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
-#include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/TargetRegistry.h"
@@ -159,13 +159,15 @@ public:
     return EndLoc;
   }
 
-  void print(raw_ostream &OS) const override {
+  void print(raw_ostream &OS, const MCAsmInfo &MAI) const override {
     switch (Kind) {
     case k_Token:     OS << "Token: " << getToken() << "\n"; break;
     case k_Register:  OS << "Reg: #" << getReg() << "\n"; break;
     case k_Immediate: OS << "Imm: " << getImm() << "\n"; break;
     case k_Memory:    assert(getMemOff() != nullptr);
-      OS << "Mem: " << getMemBase() << "+" << getMemOff() << "\n"; break;
+      OS << "Mem: " << getMemBase() << "+";
+      MAI.printExpr(OS, *getMemOff());
+      OS << "\n"; break;
     }
   }
 

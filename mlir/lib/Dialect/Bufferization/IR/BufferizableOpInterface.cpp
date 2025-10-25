@@ -18,7 +18,6 @@
 #include "mlir/IR/Value.h"
 #include "mlir/Interfaces/ControlFlowInterfaces.h"
 #include "llvm/ADT/ScopeExit.h"
-#include "llvm/Support/Debug.h"
 
 //===----------------------------------------------------------------------===//
 // BufferizableOpInterface
@@ -35,8 +34,6 @@ namespace bufferization {
 MLIR_DEFINE_EXPLICIT_TYPE_ID(mlir::bufferization::AnalysisState)
 
 #define DEBUG_TYPE "bufferizable-op-interface"
-#define DBGS() (llvm::dbgs() << '[' << DEBUG_TYPE << "] ")
-#define LDBG(X) LLVM_DEBUG(DBGS() << (X))
 
 using namespace mlir;
 using namespace bufferization;
@@ -341,11 +338,21 @@ bool OpFilter::isOpAllowed(Operation *op) const {
 namespace {
 
 /// Default function arg type converter: Use a fully dynamic layout map.
-BaseMemRefType
-defaultFunctionArgTypeConverter(TensorType type, Attribute memorySpace,
+BufferLikeType
+defaultFunctionArgTypeConverter(TensorLikeType type, Attribute memorySpace,
                                 func::FuncOp funcOp,
                                 const BufferizationOptions &options) {
-  return getMemRefTypeWithFullyDynamicLayout(type, memorySpace);
+  if (auto tensorType = mlir::dyn_cast<TensorType>(type)) {
+    return cast<BufferLikeType>(
+        getMemRefTypeWithFullyDynamicLayout(tensorType, memorySpace));
+  }
+
+  // If not builtin, fallback to TensorLikeType::getBufferType()
+  auto bufferType =
+      type.getBufferType(options, [&]() { return funcOp->emitError(); });
+  assert(succeeded(bufferType) &&
+         "a valid buffer is always expected at function boundary");
+  return *bufferType;
 }
 /// Default unknown type converter: Use a fully dynamic layout map.
 BaseMemRefType
@@ -388,14 +395,25 @@ BufferizationOptions::dynCastBufferizableOp(Value value) const {
 
 void BufferizationOptions::setFunctionBoundaryTypeConversion(
     LayoutMapOption layoutMapOption) {
-  functionArgTypeConverterFn = [=](TensorType tensorType, Attribute memorySpace,
+  functionArgTypeConverterFn = [=](TensorLikeType type, Attribute memorySpace,
                                    func::FuncOp funcOp,
                                    const BufferizationOptions &options) {
-    if (layoutMapOption == LayoutMapOption::IdentityLayoutMap)
-      return bufferization::getMemRefTypeWithStaticIdentityLayout(tensorType,
-                                                                  memorySpace);
-    return bufferization::getMemRefTypeWithFullyDynamicLayout(tensorType,
-                                                              memorySpace);
+    if (auto tensorType = mlir::dyn_cast<TensorType>(type)) {
+      if (layoutMapOption == LayoutMapOption::IdentityLayoutMap)
+        return cast<BufferLikeType>(
+            bufferization::getMemRefTypeWithStaticIdentityLayout(tensorType,
+                                                                 memorySpace));
+      return cast<BufferLikeType>(
+          bufferization::getMemRefTypeWithFullyDynamicLayout(tensorType,
+                                                             memorySpace));
+    }
+
+    // If not builtin, fallback to TensorLikeType::getBufferType()
+    auto bufferType =
+        type.getBufferType(options, [&]() { return funcOp->emitError(); });
+    assert(succeeded(bufferType) &&
+           "a valid buffer is always expected at function boundary");
+    return *bufferType;
   };
   inferFunctionResultLayout =
       layoutMapOption == LayoutMapOption::InferLayoutMap;
@@ -691,8 +709,8 @@ FailureOr<Value> bufferization::getBuffer(RewriterBase &rewriter, Value value,
   if (failed(bufferType))
     return failure();
   ensureToBufferOpIsValid(value, *bufferType);
-  return rewriter
-      .create<bufferization::ToBufferOp>(value.getLoc(), *bufferType, value)
+  return bufferization::ToBufferOp::create(rewriter, value.getLoc(),
+                                           *bufferType, value)
       .getResult();
 }
 
@@ -775,9 +793,8 @@ FailureOr<Value> BufferizationOptions::createAlloc(OpBuilder &b, Location loc,
 
   // Default bufferallocation via AllocOp.
   if (bufferAlignment != 0)
-    return b
-        .create<memref::AllocOp>(loc, type, dynShape,
-                                 b.getI64IntegerAttr(bufferAlignment))
+    return memref::AllocOp::create(b, loc, type, dynShape,
+                                   b.getI64IntegerAttr(bufferAlignment))
         .getResult();
   return memref::AllocOp::create(b, loc, type, dynShape).getResult();
 }

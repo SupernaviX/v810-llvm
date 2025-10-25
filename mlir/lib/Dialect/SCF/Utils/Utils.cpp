@@ -22,16 +22,15 @@
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 #include "mlir/Transforms/RegionUtils.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Debug.h"
+#include "llvm/Support/DebugLog.h"
 #include <cstdint>
 
 using namespace mlir;
 
 #define DEBUG_TYPE "scf-utils"
-#define DBGS() (llvm::dbgs() << '[' << DEBUG_TYPE << "] ")
-#define LDBG(X) LLVM_DEBUG(DBGS() << X << "\n")
 
 SmallVector<scf::ForOp> mlir::replaceLoopNestWithNewYields(
     RewriterBase &rewriter, MutableArrayRef<scf::ForOp> loopNest,
@@ -204,8 +203,7 @@ FailureOr<func::FuncOp> mlir::outlineSingleBlockRegion(RewriterBase &rewriter,
       OpBuilder::InsertionGuard g(rewriter);
       rewriter.setInsertionPointToStart(outlinedFuncBody);
       if (Operation *cst = orig.getDefiningOp<arith::ConstantIndexOp>()) {
-        IRMapping bvm;
-        repl = rewriter.clone(*cst, bvm)->getResult(0);
+        repl = rewriter.clone(*cst)->getResult(0);
       }
     }
     orig.replaceUsesWithIf(repl, [&](OpOperand &opOperand) {
@@ -293,14 +291,6 @@ static Value ceilDivPositive(OpBuilder &builder, Location loc, Value dividend,
   return arith::DivUIOp::create(builder, loc, sum, divisor);
 }
 
-/// Returns the trip count of `forOp` if its' low bound, high bound and step are
-/// constants, or optional otherwise. Trip count is computed as
-/// ceilDiv(highBound - lowBound, step).
-static std::optional<int64_t> getConstantTripCount(scf::ForOp forOp) {
-  return constantTripCount(forOp.getLowerBound(), forOp.getUpperBound(),
-                           forOp.getStep());
-}
-
 /// Generates unrolled copies of scf::ForOp 'loopBodyBlock', with
 /// associated 'forOpIV' by 'unrollFactor', calling 'ivRemapFn' to remap
 /// 'forOpIV' for each unrolled body. If specified, annotates the Ops in each
@@ -379,7 +369,7 @@ FailureOr<UnrolledLoopInfo> mlir::loopUnrollByFactor(
   Value stepUnrolled;
   bool generateEpilogueLoop = true;
 
-  std::optional<int64_t> constTripCount = getConstantTripCount(forOp);
+  std::optional<APInt> constTripCount = forOp.getStaticTripCount();
   if (constTripCount) {
     // Constant loop bounds computation.
     int64_t lbCst = getConstantIntValue(forOp.getLowerBound()).value();
@@ -393,7 +383,8 @@ FailureOr<UnrolledLoopInfo> mlir::loopUnrollByFactor(
     }
 
     int64_t tripCountEvenMultiple =
-        *constTripCount - (*constTripCount % unrollFactor);
+        constTripCount->getSExtValue() -
+        (constTripCount->getSExtValue() % unrollFactor);
     int64_t upperBoundUnrolledCst = lbCst + tripCountEvenMultiple * stepCst;
     int64_t stepUnrolledCst = stepCst * unrollFactor;
 
@@ -489,15 +480,15 @@ FailureOr<UnrolledLoopInfo> mlir::loopUnrollByFactor(
 /// Unrolls this loop completely.
 LogicalResult mlir::loopUnrollFull(scf::ForOp forOp) {
   IRRewriter rewriter(forOp.getContext());
-  std::optional<uint64_t> mayBeConstantTripCount = getConstantTripCount(forOp);
+  std::optional<APInt> mayBeConstantTripCount = forOp.getStaticTripCount();
   if (!mayBeConstantTripCount.has_value())
     return failure();
-  uint64_t tripCount = *mayBeConstantTripCount;
-  if (tripCount == 0)
+  const APInt &tripCount = *mayBeConstantTripCount;
+  if (tripCount.isZero())
     return success();
-  if (tripCount == 1)
+  if (tripCount.getSExtValue() == 1)
     return forOp.promoteIfSingleIteration(rewriter);
-  return loopUnrollByFactor(forOp, tripCount);
+  return loopUnrollByFactor(forOp, tripCount.getSExtValue());
 }
 
 /// Check if bounds of all inner loops are defined outside of `forOp`
@@ -525,31 +516,32 @@ LogicalResult mlir::loopUnrollJamByFactor(scf::ForOp forOp,
   // If any control operand of any inner loop of `forOp` is defined within
   // `forOp`, no unroll jam.
   if (!areInnerBoundsInvariant(forOp)) {
-    LDBG("failed to unroll and jam: inner bounds are not invariant");
+    LDBG() << "failed to unroll and jam: inner bounds are not invariant";
     return failure();
   }
 
   // Currently, for operations with results are not supported.
   if (forOp->getNumResults() > 0) {
-    LDBG("failed to unroll and jam: unsupported loop with results");
+    LDBG() << "failed to unroll and jam: unsupported loop with results";
     return failure();
   }
 
   // Currently, only constant trip count that divided by the unroll factor is
   // supported.
-  std::optional<uint64_t> tripCount = getConstantTripCount(forOp);
+  std::optional<APInt> tripCount = forOp.getStaticTripCount();
   if (!tripCount.has_value()) {
     // If the trip count is dynamic, do not unroll & jam.
-    LDBG("failed to unroll and jam: trip count could not be determined");
+    LDBG() << "failed to unroll and jam: trip count could not be determined";
     return failure();
   }
-  if (unrollJamFactor > *tripCount) {
-    LDBG("unroll and jam factor is greater than trip count, set factor to trip "
-         "count");
-    unrollJamFactor = *tripCount;
-  } else if (*tripCount % unrollJamFactor != 0) {
-    LDBG("failed to unroll and jam: unsupported trip count that is not a "
-         "multiple of unroll jam factor");
+  if (unrollJamFactor > tripCount->getZExtValue()) {
+    LDBG() << "unroll and jam factor is greater than trip count, set factor to "
+              "trip "
+              "count";
+    unrollJamFactor = tripCount->getZExtValue();
+  } else if (tripCount->getSExtValue() % unrollJamFactor != 0) {
+    LDBG() << "failed to unroll and jam: unsupported trip count that is not a "
+              "multiple of unroll jam factor";
     return failure();
   }
 
@@ -679,9 +671,10 @@ LogicalResult mlir::loopUnrollJamByFactor(scf::ForOp forOp,
   return success();
 }
 
-Range emitNormalizedLoopBoundsForIndexType(RewriterBase &rewriter, Location loc,
-                                           OpFoldResult lb, OpFoldResult ub,
-                                           OpFoldResult step) {
+static Range emitNormalizedLoopBoundsForIndexType(RewriterBase &rewriter,
+                                                  Location loc, OpFoldResult lb,
+                                                  OpFoldResult ub,
+                                                  OpFoldResult step) {
   Range normalizedLoopBounds;
   normalizedLoopBounds.offset = rewriter.getIndexAttr(0);
   normalizedLoopBounds.stride = rewriter.getIndexAttr(1);
@@ -828,9 +821,8 @@ static Value getProductOfIntsOrIndexes(RewriterBase &rewriter, Location loc,
       productOf = v;
   }
   if (!productOf) {
-    productOf = rewriter
-                    .create<arith::ConstantOp>(
-                        loc, rewriter.getOneAttr(getType(values.front())))
+    productOf = arith::ConstantOp::create(
+                    rewriter, loc, rewriter.getOneAttr(getType(values.front())))
                     .getResult();
   }
   return productOf.value();
@@ -1235,6 +1227,7 @@ static void getPerfectlyNestedLoopsImpl(
 
 static Loops stripmineSink(scf::ForOp forOp, Value factor,
                            ArrayRef<scf::ForOp> targets) {
+  assert(!forOp.getUnsignedCmp() && "unsigned loops are not supported");
   auto originalStep = forOp.getStep();
   auto iv = forOp.getInductionVar();
 
@@ -1243,6 +1236,8 @@ static Loops stripmineSink(scf::ForOp forOp, Value factor,
 
   Loops innerLoops;
   for (auto t : targets) {
+    assert(!t.getUnsignedCmp() && "unsigned loops are not supported");
+
     // Save information for splicing ops out of t when done
     auto begin = t.getBody()->begin();
     auto nOps = t.getBody()->getOperations().size();
@@ -1417,6 +1412,8 @@ scf::ForallOp mlir::fuseIndependentSiblingForallLoops(scf::ForallOp target,
 scf::ForOp mlir::fuseIndependentSiblingForLoops(scf::ForOp target,
                                                 scf::ForOp source,
                                                 RewriterBase &rewriter) {
+  assert(source.getUnsignedCmp() == target.getUnsignedCmp() &&
+         "incompatible signedness");
   unsigned numTargetOuts = target.getNumResults();
   unsigned numSourceOuts = source.getNumResults();
 
@@ -1430,7 +1427,8 @@ scf::ForOp mlir::fuseIndependentSiblingForLoops(scf::ForOp target,
   rewriter.setInsertionPointAfter(source);
   scf::ForOp fusedLoop = scf::ForOp::create(
       rewriter, source.getLoc(), source.getLowerBound(), source.getUpperBound(),
-      source.getStep(), fusedInitArgs);
+      source.getStep(), fusedInitArgs, /*bodyBuilder=*/nullptr,
+      source.getUnsignedCmp());
 
   // Map original induction variables and operands to those of the fused loop.
   IRMapping mapping;
@@ -1507,4 +1505,42 @@ FailureOr<scf::ForallOp> mlir::normalizeForallOp(RewriterBase &rewriter,
 
   rewriter.replaceOp(forallOp, normalizedForallOp);
   return normalizedForallOp;
+}
+
+bool mlir::isPerfectlyNestedForLoops(
+    MutableArrayRef<LoopLikeOpInterface> loops) {
+  assert(!loops.empty() && "unexpected empty loop nest");
+  if (loops.size() == 1)
+    return isa_and_nonnull<scf::ForOp>(loops.front().getOperation());
+  for (auto [outerLoop, innerLoop] :
+       llvm::zip_equal(loops.drop_back(), loops.drop_front())) {
+    auto outerFor = dyn_cast_or_null<scf::ForOp>(outerLoop.getOperation());
+    auto innerFor = dyn_cast_or_null<scf::ForOp>(innerLoop.getOperation());
+    if (!outerFor || !innerFor)
+      return false;
+    auto outerBBArgs = outerFor.getRegionIterArgs();
+    auto innerIterArgs = innerFor.getInitArgs();
+    if (outerBBArgs.size() != innerIterArgs.size())
+      return false;
+
+    for (auto [outerBBArg, innerIterArg] :
+         llvm::zip_equal(outerBBArgs, innerIterArgs)) {
+      if (!llvm::hasSingleElement(outerBBArg.getUses()) ||
+          innerIterArg != outerBBArg)
+        return false;
+    }
+
+    ValueRange outerYields =
+        cast<scf::YieldOp>(outerFor.getBody()->getTerminator())->getOperands();
+    ValueRange innerResults = innerFor.getResults();
+    if (outerYields.size() != innerResults.size())
+      return false;
+    for (auto [outerYield, innerResult] :
+         llvm::zip_equal(outerYields, innerResults)) {
+      if (!llvm::hasSingleElement(innerResult.getUses()) ||
+          outerYield != innerResult)
+        return false;
+    }
+  }
+  return true;
 }

@@ -185,7 +185,7 @@ StructureConstructor ArrayElement::ConvertToStructureConstructor(
   std::list<ComponentSpec> components;
   for (auto &subscript : subscripts) {
     components.emplace_back(std::optional<Keyword>{},
-        ComponentDataSource{std::move(*Unwrap<Expr>(subscript))});
+        ComponentDataSource{std::move(UnwrapRef<Expr>(subscript))});
   }
   DerivedTypeSpec spec{std::move(name), std::list<TypeParamSpec>{}};
   spec.derivedTypeSpec = &derived;
@@ -322,7 +322,7 @@ std::string OmpTraitSetSelectorName::ToString() const {
 }
 
 llvm::omp::Clause OpenMPAtomicConstruct::GetKind() const {
-  auto &dirSpec{std::get<OmpDirectiveSpecification>(t)};
+  const OmpDirectiveSpecification &dirSpec{std::get<OmpBeginDirective>(t)};
   for (auto &clause : dirSpec.Clauses().v) {
     switch (clause.Id()) {
     case llvm::omp::Clause::OMPC_read:
@@ -337,14 +337,14 @@ llvm::omp::Clause OpenMPAtomicConstruct::GetKind() const {
 }
 
 bool OpenMPAtomicConstruct::IsCapture() const {
-  auto &dirSpec{std::get<OmpDirectiveSpecification>(t)};
+  const OmpDirectiveSpecification &dirSpec{std::get<OmpBeginDirective>(t)};
   return llvm::any_of(dirSpec.Clauses().v, [](auto &clause) {
     return clause.Id() == llvm::omp::Clause::OMPC_capture;
   });
 }
 
 bool OpenMPAtomicConstruct::IsCompare() const {
-  auto &dirSpec{std::get<OmpDirectiveSpecification>(t)};
+  const OmpDirectiveSpecification &dirSpec{std::get<OmpBeginDirective>(t)};
   return llvm::any_of(dirSpec.Clauses().v, [](auto &clause) {
     return clause.Id() == llvm::omp::Clause::OMPC_compare;
   });

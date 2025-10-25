@@ -188,8 +188,8 @@ struct ExecuteRegionOpInterface
     TypeRange newResultTypes(yieldOp.getResults());
 
     // Create new op and move over region.
-    auto newOp =
-        scf::ExecuteRegionOp::create(rewriter, op->getLoc(), newResultTypes);
+    auto newOp = scf::ExecuteRegionOp::create(
+        rewriter, op->getLoc(), newResultTypes, executeRegionOp.getNoInline());
     newOp.getRegion().takeBody(executeRegionOp.getRegion());
 
     // Bufferize every block.
@@ -497,10 +497,10 @@ getBbArgReplacements(RewriterBase &rewriter, Block::BlockArgListType bbArgs,
     size_t idx = it.index();
     Value val = it.value();
     if (tensorIndices.contains(idx)) {
-      result.push_back(rewriter
-                           .create<bufferization::ToTensorOp>(
-                               val.getLoc(), oldBbArgs[idx].getType(), val)
-                           .getResult());
+      result.push_back(
+          bufferization::ToTensorOp::create(rewriter, val.getLoc(),
+                                            oldBbArgs[idx].getType(), val)
+              .getResult());
     } else {
       result.push_back(val);
     }
@@ -769,7 +769,8 @@ struct ForOpInterface
     // Construct a new scf.for op with memref instead of tensor values.
     auto newForOp = scf::ForOp::create(
         rewriter, forOp.getLoc(), forOp.getLowerBound(), forOp.getUpperBound(),
-        forOp.getStep(), castedInitArgs);
+        forOp.getStep(), castedInitArgs, /*bodyBuilder=*/nullptr,
+        forOp.getUnsignedCmp());
     newForOp->setAttrs(forOp->getAttrs());
     Block *loopBody = newForOp.getBody();
 

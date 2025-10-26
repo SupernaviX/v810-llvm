@@ -94,7 +94,7 @@ namespace {
     }
 
     void applyFixup(const MCFragment &F, const MCFixup &Fixup,
-                    const MCValue &Target, MutableArrayRef<char> Data,
+                    const MCValue &Target, uint8_t *Data,
                     uint64_t Value, bool IsResolved) override {
       maybeAddReloc(F, Fixup, Target, Value, IsResolved);
       if (!IsResolved)
@@ -111,14 +111,11 @@ namespace {
       // Shift the value into position.
       Value <<= Info.TargetOffset;
 
-      unsigned Offset = Fixup.getOffset();
-      assert(Offset + NumBytes <= Data.size() && "Invalid fixup offset!");
-
       // For each byte of the fragment that the fixup touches, mask in the
       // bits from the fixup value.
       for (int i = 0; i < NumBytes; ++i) {
         uint8_t mask = (((Value >> (i * 8)) & 0xff));
-        Data[Offset + i] |= mask;
+        Data[i] |= mask;
       }
     }
 

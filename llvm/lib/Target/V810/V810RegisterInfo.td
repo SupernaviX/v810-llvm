@@ -39,6 +39,7 @@ def R30 : V810Reg<30, "r30">, DwarfRegNum<[30]>;
 def R31 : V810Reg<31, "r31", ["lp"]>, DwarfRegNum<[31]>;
 
 def GenRegs : RegisterClass<"V810", [i32, f32], 32, (sequence "R%u", 0, 31)>;
+def Clobber : RegisterClass<"V810", [i32, f32], 32, (add R30)>;
 
 // Program status word is the V810's status register
 def SR0  : V810Reg< 0, "sr0",  ["eipc"]>, DwarfRegNum<[32]>;

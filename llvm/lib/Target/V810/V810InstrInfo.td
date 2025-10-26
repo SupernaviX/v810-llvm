@@ -719,12 +719,12 @@ def SCH1BSU : BitstringSearchInst<0b00010, "sch1bsu">;
 // $rcmp is always the same as r2, and rswap is always R30.
 // The latter is guaranteed by using custom lowering for ATOMIC_CMP_SWAP.
 let mayLoad = 1, mayStore = 1, Uses = [R30], Defs = [SR5],
-    Constraints = "$r2 = $rcmp", DisableEncoding = "$rcmp,$rswap",
+    Constraints = "$r2 = $rcmp",
     Itinerary = IIC_Store in
 def CAXI : FormatVI<0b111010,
-  (outs GenRegs:$r2), (ins (MEMri $r1, $disp):$addr, GenRegs:$rcmp, GenRegs:$rswap),
+  (outs GenRegs:$r2), (ins (MEMri $r1, $disp):$addr, GenRegs:$rcmp, Clobber:$rswap),
   "caxi $addr, $r2",
-  [(set i32:$r2, (V810Caxi ADDRri:$addr, GenRegs:$rcmp, GenRegs:$rswap))],
+  [(set i32:$r2, (V810Caxi ADDRri:$addr, GenRegs:$rcmp, Clobber:$rswap))],
   [WriteLoad, WriteStore]
 >;
 

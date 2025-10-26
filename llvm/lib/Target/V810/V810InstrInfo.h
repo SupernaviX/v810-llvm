@@ -106,7 +106,7 @@ class V810InstrInfo : public V810GenInstrInfo {
   bool isUnpredicatedTerminatorBesidesNop(const MachineInstr &MI) const;
 
 public:
-  explicit V810InstrInfo();
+  explicit V810InstrInfo(const V810Subtarget &ST);
   const V810RegisterInfo &getRegisterInfo() const { return RI; }
 
   virtual unsigned getInstSizeInBytes(const MachineInstr &MI) const override;

@@ -111,6 +111,7 @@ class FormatVI<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern, 
   field bits<32> Inst;
   let Size = 4;
 
+  bits<0> rswap; // needed for CAXI to consume r30
   bits<5> r2;
   bits<5> r1;
   bits<16> disp;

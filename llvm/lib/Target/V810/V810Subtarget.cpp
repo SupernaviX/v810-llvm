@@ -31,5 +31,5 @@ V810Subtarget &V810Subtarget::initializeSubtargetDependencies(const Triple &TT,
 V810Subtarget::V810Subtarget(const Triple &TT, const std::string &CPU,
                              const std::string &FS, const TargetMachine &TM)
     : V810GenSubtargetInfo(TT, CPU, /*TuneCPU*/ CPU, FS),
-      InstrInfo(), TLInfo(TM, initializeSubtargetDependencies(TT, CPU, FS)), FrameLowering(),
+      InstrInfo(*this), TLInfo(TM, initializeSubtargetDependencies(TT, CPU, FS)), FrameLowering(),
       InstrItins(getInstrItineraryForCPU(getCPUName(TT, CPU))) {}

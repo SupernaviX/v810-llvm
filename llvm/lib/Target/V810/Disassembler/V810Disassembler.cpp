@@ -1,11 +1,13 @@
 #include "MCTargetDesc/V810MCTargetDesc.h"
 #include "TargetInfo/V810TargetInfo.h"
+#include "llvm/MC/MCDecoder.h"
 #include "llvm/MC/MCDecoderOps.h"
 #include "llvm/MC/MCDisassembler/MCDisassembler.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Endian.h"
 
 using namespace llvm;
+using namespace llvm::MCD;
 
 #define DEBUG_TYPE "v810-disassembler"
 
@@ -65,6 +67,11 @@ static DecodeStatus DecodeGenRegsRegisterClass(MCInst &Inst, unsigned RegNo,
     return MCDisassembler::Fail;
   unsigned Reg = GenRegDecoderTable[RegNo];
   Inst.addOperand(MCOperand::createReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeClobberRegisterClass(MCInst &Inst, const MCDisassembler *Decoder) {
+  Inst.addOperand(MCOperand::createReg(V810::R30));
   return MCDisassembler::Success;
 }
 

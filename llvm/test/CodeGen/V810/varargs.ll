@@ -7,27 +7,22 @@ define i32 @sum(i32 %count, ...) {
 ; CHECK:       # %bb.0: # %entry
 ; CHECK-NEXT:    add -4, r3
 ; CHECK-NEXT:    addi 4, r3, r7
+; CHECK-NEXT:    mov 0, r10
 ; CHECK-NEXT:    cmp 0, r6
 ; CHECK-NEXT:    st.w r7, 0[r3]
-; CHECK-NEXT:    be .LBB0_4
-; CHECK-NEXT:  # %bb.1: # %for.body.preheader
-; CHECK-NEXT:    mov 0, r7
-; CHECK-NEXT:  .LBB0_2: # %for.body
+; CHECK-NEXT:    be .LBB0_2
+; CHECK-NEXT:  .LBB0_1: # %for.body
 ; CHECK-NEXT:    # =>This Inner Loop Header: Depth=1
-; CHECK-NEXT:    ld.w 0[r3], r8
-; CHECK-NEXT:    mov r8, r9
-; CHECK-NEXT:    add 4, r9
-; CHECK-NEXT:    st.w r9, 0[r3]
-; CHECK-NEXT:    ld.w 0[r8], r10
-; CHECK-NEXT:    add r7, r10
+; CHECK-NEXT:    ld.w 0[r3], r7
+; CHECK-NEXT:    mov r7, r8
+; CHECK-NEXT:    add 4, r8
+; CHECK-NEXT:    st.w r8, 0[r3]
+; CHECK-NEXT:    mov r10, r8
+; CHECK-NEXT:    ld.w 0[r7], r10
+; CHECK-NEXT:    add r8, r10
 ; CHECK-NEXT:    add -1, r6
-; CHECK-NEXT:    mov r10, r7
-; CHECK-NEXT:    bne .LBB0_2
-; CHECK-NEXT:  # %bb.3: # %for.cond.cleanup
-; CHECK-NEXT:    add 4, r3
-; CHECK-NEXT:    jmp [r31]
-; CHECK-NEXT:  .LBB0_4:
-; CHECK-NEXT:    mov 0, r10
+; CHECK-NEXT:    bne .LBB0_1
+; CHECK-NEXT:  .LBB0_2: # %for.cond.cleanup
 ; CHECK-NEXT:    add 4, r3
 ; CHECK-NEXT:    jmp [r31]
 entry:

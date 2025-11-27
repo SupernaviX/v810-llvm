@@ -18,6 +18,8 @@ include "V810CallingConv.td"
 include "V810Schedule.td"
 include "V810InstrInfo.td"
 
+defm : RemapAllTargetPseudoPointerOperands<GenRegs>;
+
 def V810InstrInfo : InstrInfo;
 
 def V810AsmParser : AsmParser {

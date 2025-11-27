@@ -1,3 +1,4 @@
+// UNSUPPORTED: system-windows
 // This test checks that the module map paths we're reporting are the as-requested
 // paths (as opposed to the paths files resolve to after going through VFS overlays).
 

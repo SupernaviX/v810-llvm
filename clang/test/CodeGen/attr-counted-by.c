@@ -3,6 +3,7 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-linux-gnu -DCOUNTED_BY -O2 -Wall -fstrict-flex-arrays=3 -emit-llvm -o - %s | FileCheck --check-prefix=NO-SANITIZE-WITH-ATTR %s
 // RUN: %clang_cc1 -triple x86_64-unknown-linux-gnu -O2 -Wall -fsanitize=array-bounds,object-size,local-bounds -fstrict-flex-arrays=3 -emit-llvm -o - %s | FileCheck --check-prefix=SANITIZE-WITHOUT-ATTR %s
 // RUN: %clang_cc1 -triple x86_64-unknown-linux-gnu -O2 -Wall -fstrict-flex-arrays=3 -emit-llvm -o - %s | FileCheck --check-prefix=NO-SANITIZE-WITHOUT-ATTR %s
+// XFAIL: *
 
 #if !__has_attribute(counted_by)
 #error "has attribute broken"

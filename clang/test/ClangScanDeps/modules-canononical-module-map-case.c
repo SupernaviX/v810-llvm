@@ -1,3 +1,4 @@
+// UNSUPPORTED: system-windows
 // This test checks that VFS-mapped module map path has the correct spelling
 // after canonicalization, even if it was first accessed using different case.
 

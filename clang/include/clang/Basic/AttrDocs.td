@@ -3047,6 +3047,20 @@ the type is not supported for that value of ``__riscv_v_fixed_vlen``.
 }];
 }
 
+def V810InterruptDocs : Documentation {
+  let Category = DocCatFunction;
+  let Heading = "interrupt (V810)";
+  let Content = [{
+Clang supports the GNU style ``__attribute__((interrupt))`` attribute on
+V810 targets. This attribute may be attached to a function definition and instructs
+the backend to generate appropriate code for an interrupt service routine.
+
+The function must not accept any arguments, and must return ``void``. It will
+treat all registers as callee-saved, and end with ``RETI`` instead of a typical
+function return.
+  }];
+}
+
 def AVRInterruptDocs : Documentation {
   let Category = DocCatFunction;
   let Heading = "interrupt (AVR)";

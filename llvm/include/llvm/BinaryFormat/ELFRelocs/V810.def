@@ -1,0 +1,22 @@
+#ifndef ELF_RELOC
+#error "ELF_RELOC must be defined"
+#endif
+
+/* binutils 2.10-compatible offsets */
+ELF_RELOC(R_V810_NONE,      0)
+ELF_RELOC(R_V810_9_PCREL,   1)
+ELF_RELOC(R_V810_26_PCREL,  2)
+ELF_RELOC(R_V810_HI_S,      3)
+ELF_RELOC(R_V810_HI,        4)
+ELF_RELOC(R_V810_LO,        5)
+ELF_RELOC(R_V810_32,        6)
+ELF_RELOC(R_V810_16,        7)
+ELF_RELOC(R_V810_8,         8)
+ELF_RELOC(R_V810_SDAOFF,    9)
+ELF_RELOC(R_V810_ZDAOFF,    10)
+ELF_RELOC(R_V810_TDAOFF,    11)
+
+/* LLVM additions. TODO: Are these necessary? */
+ELF_RELOC(R_V810_DISP8,     15)
+ELF_RELOC(R_V810_DISP16,    16)
+ELF_RELOC(R_V810_DISP32,    17)

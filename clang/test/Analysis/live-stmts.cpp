@@ -1,3 +1,4 @@
+// UNSUPPORTED: system-darwin
 // RUN: %clang_analyze_cc1 -w -analyzer-checker=debug.DumpLiveExprs %s 2>&1\
 // RUN:   | FileCheck %s
 

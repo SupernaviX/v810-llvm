@@ -1,0 +1,112 @@
+name: Packaging
+concurrency: compiler-package
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  package:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-2022, macos-latest, ubuntu-22.04]
+    steps:
+      - name: Setup Windows
+        if: startsWith(matrix.os, 'windows')
+        uses: llvm/actions/setup-windows@main
+        with:
+          arch: amd64
+      # On Windows, starting with win19/20220814.1, cmake choose the 32-bit
+      # python3.10.6 libraries instead of the 64-bit libraries when building
+      # lldb.  Using this setup-python action to make 3.10 the default
+      # python fixes this.
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Ninja
+        uses: llvm/actions/install-ninja@main
+
+      # actions/checkout deletes any existing files in the new git directory,
+      # so this needs to either run before ccache-action or it has to use
+      # clean: false.
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Configure POSIX
+        if: ${{!startsWith(matrix.os, 'windows')}}
+        run: |
+          mkdir build
+          cd build
+          cmake \
+            -GNinja \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" \
+            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/llvm-v810 \
+            -C../clang/cmake/caches/V810.cmake \
+            ../llvm
+
+      - name: Configure Windows
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          mkdir build
+          cd build
+          cmake `
+            -GNinja `
+            -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/llvm-v810 `
+            -DCMAKE_C_COMPILER=cl `
+            -DCMAKE_CXX_COMPILER=cl `
+            -C../clang/cmake/caches/V810.cmake `
+            ../llvm
+
+      - name: Build
+        run: cd build; ninja distribution
+
+      - name: Install
+        run: cd build; ninja install-distribution-stripped
+
+      - name: Bundle Linux
+        if: startsWith(matrix.os, 'ubuntu')
+        run: tar -cJvf llvm-v810-linux-main.tar.xz llvm-v810
+      - name: Bundle Windows
+        if: startsWith(matrix.os, 'windows')
+        run: 7z a llvm-v810-windows-main.7z llvm-v810
+      - name: Bundle macOS
+        if: startsWith(matrix.os, 'macos')
+        run: tar -cJvf llvm-v810-darwin-main.tar.xz llvm-v810
+
+      - name: Archive Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.os }}
+          path: llvm-v810-*-main.*
+
+  release:
+    runs-on: ubuntu-22.04
+    needs: package
+    steps:
+      - id: getDate
+        name: Get Current Date
+        run: echo "TODAY=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+        shell: bash
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: windows-2022
+      - name: Download Darwin artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: macos-latest
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: ubuntu-22.04
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body: "Compiler build"
+          name: "${{ steps.getDate.outputs.TODAY }}"
+          tag_name: "llvm-v810-${{ steps.getDate.outputs.TODAY }}"
+          files: |
+            llvm-v810-windows-main.7z
+            llvm-v810-darwin-main.tar.xz
+            llvm-v810-linux-main.tar.xz

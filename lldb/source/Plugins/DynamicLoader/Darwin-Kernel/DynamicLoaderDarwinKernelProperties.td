@@ -7,7 +7,7 @@ let Definition = "dynamicloaderdarwinkernel" in {
     Desc<"Automatically loads kext images when attaching to a kernel.">;
   def ScanType: Property<"scan-type", "Enum">,
     Global,
-    DefaultEnumValue<"eKASLRScanNearPC">,
+    DefaultEnumValue<"eKASLRScanNone">, // Disable this for faster debug session init
     EnumValues<"OptionEnumValues(g_kaslr_kernel_scan_enum_values)">,
     Desc<"Control how many reads lldb will make while searching for a Darwin kernel on attach.">;
 }

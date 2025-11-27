@@ -543,6 +543,9 @@ def AEABI_MEMCLR8 : RuntimeLibcall;
 def HEXAGON_MEMCPY_LIKELY_ALIGNED_MIN32BYTES_MULT8BYTES : RuntimeLibcall;
 def HEXAGON_VOLATILE_MEMCPY : RuntimeLibcall;
 
+// V810 calls
+def MEMCPY_WORDALIGNED : RuntimeLibcall;
+
 // XCore calls
 def MEMCPY_ALIGN_4 : RuntimeLibcall;
 
@@ -3252,6 +3255,16 @@ def isSPIRV : RuntimeLibcallPredicate<"TT.isSPIRV()">;
 // PreISelIntrinsicLowering in favor of SPIRVPrepareFunctions;
 // probably should remove that and just use the default one.
 def SPIRVSystemLibrary : SystemRuntimeLibrary<isSPIRV, (add memset, memcpy)>;
+
+//===----------------------------------------------------------------------===//
+// V810 Runtime Libcalls
+//===----------------------------------------------------------------------===//
+
+def isV810 : RuntimeLibcallPredicate<"TT.isV810()">;
+
+def __memcpy_wordaligned : RuntimeLibcallImpl<MEMCPY_WORDALIGNED>;
+
+def V810SystemLibrary : SystemRuntimeLibrary<isV810, (add DefaultLibcallImpls32, memcpy, memset, __memcpy_wordaligned)>;
 
 //===----------------------------------------------------------------------===//
 // Windows Runtime Libcalls

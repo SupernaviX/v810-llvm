@@ -66,6 +66,7 @@
 #include "clang/Sema/SemaSYCL.h"
 #include "clang/Sema/SemaSwift.h"
 #include "clang/Sema/SemaSystemZ.h"
+#include "clang/Sema/SemaV810.h"
 #include "clang/Sema/SemaWasm.h"
 #include "clang/Sema/SemaX86.h"
 #include "clang/Sema/TemplateDeduction.h"
@@ -304,6 +305,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
       SYCLPtr(std::make_unique<SemaSYCL>(*this)),
       SwiftPtr(std::make_unique<SemaSwift>(*this)),
       SystemZPtr(std::make_unique<SemaSystemZ>(*this)),
+      V810Ptr(std::make_unique<SemaV810>(*this)),
       WasmPtr(std::make_unique<SemaWasm>(*this)),
       X86Ptr(std::make_unique<SemaX86>(*this)),
       MSPointerToMemberRepresentationMethod(

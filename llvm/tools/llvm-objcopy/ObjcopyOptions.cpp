@@ -326,6 +326,8 @@ static const StringMap<MachineInfo> TargetMap{
     // SPARC
     {"elf32-sparc", {ELF::EM_SPARC, false, false}},
     {"elf32-sparcel", {ELF::EM_SPARC, false, true}},
+    // V810
+    {"elf32-v810", {ELF::EM_V810, false, true}},
     // Hexagon
     {"elf32-hexagon", {ELF::EM_HEXAGON, false, true}},
     // LoongArch

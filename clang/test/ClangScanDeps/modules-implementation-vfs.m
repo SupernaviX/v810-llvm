@@ -1,3 +1,4 @@
+// UNSUPPORTED: system-windows
 // Ensure we get the virtual module map path for a module whose implementation
 // file we are compiling.
 

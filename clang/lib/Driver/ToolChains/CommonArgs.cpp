@@ -17,6 +17,7 @@
 #include "Arch/RISCV.h"
 #include "Arch/Sparc.h"
 #include "Arch/SystemZ.h"
+#include "Arch/V810.h"
 #include "Arch/VE.h"
 #include "Arch/X86.h"
 #include "HIPAMD.h"
@@ -92,6 +93,7 @@ static bool useFramePointerForTargetByDefault(const llvm::opt::ArgList &Args,
   case llvm::Triple::sparc:
   case llvm::Triple::sparcel:
   case llvm::Triple::sparcv9:
+  case llvm::Triple::v810:
   case llvm::Triple::amdgcn:
   case llvm::Triple::r600:
   case llvm::Triple::csky:
@@ -634,6 +636,8 @@ const char *tools::getLDMOption(const llvm::Triple &T, const ArgList &Args) {
     if (T.isX32())
       return "elf32_x86_64";
     return "elf_x86_64";
+  case llvm::Triple::v810:
+    return "elf32_v810";
   case llvm::Triple::ve:
     return "elf64ve";
   case llvm::Triple::csky:
@@ -797,6 +801,9 @@ std::string tools::getCPUName(const Driver &D, const ArgList &Args,
   case llvm::Triple::sparcv9:
     return sparc::getSparcTargetCPU(D, Args, T);
 
+  case llvm::Triple::v810:
+    return v810::getV810TargetCPU(D, Args, T);
+
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
     return x86::getX86TargetCPU(D, Args, T);
@@ -904,6 +911,9 @@ void tools::getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     break;
   case llvm::Triple::msp430:
     msp430::getMSP430TargetFeatures(D, Args, Features);
+    break;
+  case llvm::Triple::v810:
+    v810::getV810TargetFeatures(D, Args, Features);
     break;
   case llvm::Triple::ve:
     ve::getVETargetFeatures(D, Args, Features);

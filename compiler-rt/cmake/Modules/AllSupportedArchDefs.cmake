@@ -15,6 +15,7 @@ set(SPARC sparc)
 set(SPARCV9 sparcv9)
 set(WASM32 wasm32)
 set(WASM64 wasm64)
+set(V810 v810)
 set(VE ve)
 
 if(APPLE)

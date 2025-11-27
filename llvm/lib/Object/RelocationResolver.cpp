@@ -597,6 +597,61 @@ static uint64_t resolveLoongArch(uint64_t Type, uint64_t Offset, uint64_t S,
   }
 }
 
+static bool supportsV810(uint64_t Type) {
+  switch (Type) {
+  case ELF::R_V810_NONE:
+  case ELF::R_V810_8:
+  case ELF::R_V810_16:
+  case ELF::R_V810_32:
+  case ELF::R_V810_DISP8:
+  case ELF::R_V810_DISP16:
+  case ELF::R_V810_DISP32:
+  case ELF::R_V810_LO:
+  case ELF::R_V810_HI:
+  case ELF::R_V810_HI_S:
+  case ELF::R_V810_SDAOFF:
+  case ELF::R_V810_9_PCREL:
+  case ELF::R_V810_26_PCREL:
+    return true;
+  default:
+    return false;
+  }
+}
+
+static uint64_t resolveV810(uint64_t Type, uint64_t Offset, uint64_t S,
+                            uint64_t LocData, int64_t Addend) {
+  switch (Type) {
+  case ELF::R_V810_NONE:
+    return LocData;
+  case ELF::R_V810_8:
+    return (S + Addend) & 0xFF;
+  case ELF::R_V810_16:
+  case ELF::R_V810_LO:
+  case ELF::R_V810_SDAOFF:
+    return (S + Addend) & 0xFFFF;
+  case ELF::R_V810_32:
+    return (S + Addend) & 0xFFFFFFFF;
+  case ELF::R_V810_HI:
+    return ((S + Addend) >> 16) & 0xFFFF;
+  case ELF::R_V810_HI_S: {
+    uint64_t Val = S + Addend;
+    return ((Val >> 16) & 0x0000ffff) + ((Val & 0x8000) != 0);
+  }
+  case ELF::R_V810_DISP8:
+    return (S + Addend - Offset) & 0xFF;
+  case ELF::R_V810_DISP16:
+    return (S + Addend - Offset) & 0xFFFF;
+  case ELF::R_V810_DISP32:
+    return (S + Addend - Offset) & 0xFFFFFFFF;
+  case ELF::R_V810_9_PCREL:
+    return (S + Addend - Offset) & 0x01ff;
+  case ELF::R_V810_26_PCREL:
+    return (S + Addend - Offset) & 0x03ffffff;
+  default:
+    llvm_unreachable("Invalid relocation type");
+  }
+}
+
 static bool supportsCOFFX86(uint64_t Type) {
   switch (Type) {
   case COFF::IMAGE_REL_I386_SECREL:
@@ -856,6 +911,8 @@ getRelocationResolver(const ObjectFile &Obj) {
       return {supportsRISCV, resolveRISCV};
     case Triple::csky:
       return {supportsCSKY, resolveCSKY};
+    case Triple::v810:
+      return {supportsV810, resolveV810};
     default:
       if (isAMDGPU(Obj))
         return {supportsAmdgpu, resolveAmdgpu};

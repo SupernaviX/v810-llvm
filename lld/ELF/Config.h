@@ -664,6 +664,9 @@ struct Ctx : CommonLinkerContext {
 
     // _TLS_MODULE_BASE_ on targets that support TLSDESC.
     Defined *tlsModuleBase;
+
+    // __gp for V810
+    Defined *v810Gp;
   };
   ElfSym sym{};
   std::unique_ptr<SymbolTable> symtab;

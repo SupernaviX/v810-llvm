@@ -589,6 +589,9 @@ std::unique_ptr<TargetCodeGenInfo>
 createSparcV9TargetCodeGenInfo(CodeGenModule &CGM);
 
 std::unique_ptr<TargetCodeGenInfo>
+createV810TargetCodeGenInfo(CodeGenModule &CGM);
+
+std::unique_ptr<TargetCodeGenInfo>
 createSystemZTargetCodeGenInfo(CodeGenModule &CGM, bool HasVector,
                                bool SoftFloatABI);
 

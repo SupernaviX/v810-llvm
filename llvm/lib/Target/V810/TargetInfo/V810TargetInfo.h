@@ -1,0 +1,12 @@
+#ifndef LLVM_LIB_TARGET_V810_TARGETINFO_V810TARGETINFO_H
+#define LLVM_LIB_TARGET_V810_TARGETINFO_V810TARGETINFO_H
+
+namespace llvm {
+
+class Target;
+
+Target &getTheV810Target();
+
+} // namespace llvm
+
+#endif // LLVM_LIB_TARGET_V810_TARGETINFO_V810TARGETINFO_H

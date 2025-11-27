@@ -180,6 +180,7 @@ class SemaSPIRV;
 class SemaSYCL;
 class SemaSwift;
 class SemaSystemZ;
+class SemaV810;
 class SemaWasm;
 class SemaX86;
 class StandardConversionSequence;
@@ -1538,6 +1539,11 @@ public:
     return *SystemZPtr;
   }
 
+  SemaV810 &V810() {
+    assert(V810Ptr);
+    return *V810Ptr;
+  }
+
   SemaWasm &Wasm() {
     assert(WasmPtr);
     return *WasmPtr;
@@ -1605,6 +1611,7 @@ private:
   std::unique_ptr<SemaSYCL> SYCLPtr;
   std::unique_ptr<SemaSwift> SwiftPtr;
   std::unique_ptr<SemaSystemZ> SystemZPtr;
+  std::unique_ptr<SemaV810> V810Ptr;
   std::unique_ptr<SemaWasm> WasmPtr;
   std::unique_ptr<SemaX86> X86Ptr;
 

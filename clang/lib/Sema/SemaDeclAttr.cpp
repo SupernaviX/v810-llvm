@@ -57,6 +57,7 @@
 #include "clang/Sema/SemaRISCV.h"
 #include "clang/Sema/SemaSYCL.h"
 #include "clang/Sema/SemaSwift.h"
+#include "clang/Sema/SemaV810.h"
 #include "clang/Sema/SemaWasm.h"
 #include "clang/Sema/SemaX86.h"
 #include "llvm/ADT/APSInt.h"
@@ -6250,6 +6251,9 @@ static void handleInterruptAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
   case llvm::Triple::riscv32:
   case llvm::Triple::riscv64:
     S.RISCV().handleInterruptAttr(D, AL);
+    break;
+  case llvm::Triple::v810:
+    S.V810().handleInterruptAttr(D, AL);
     break;
   default:
     S.ARM().handleInterruptAttr(D, AL);

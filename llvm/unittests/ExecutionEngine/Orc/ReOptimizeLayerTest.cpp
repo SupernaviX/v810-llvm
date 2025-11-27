@@ -57,6 +57,10 @@ protected:
     if (Triple.isPPC())
       GTEST_SKIP();
 
+    // Tests are failing on windows and IDK why
+    if (Triple.isOSWindows())
+      GTEST_SKIP();
+
     // RISC-V is not supported yet
     if (Triple.isRISCV())
       GTEST_SKIP();

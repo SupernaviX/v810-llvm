@@ -264,6 +264,7 @@ void ScalarEnumerationTraits<ELFYAML::ELF_EM>::enumeration(
   ECase(EM_FR30);
   ECase(EM_D10V);
   ECase(EM_D30V);
+  ECase(EM_V810);
   ECase(EM_V850);
   ECase(EM_M32R);
   ECase(EM_MN10300);
@@ -840,6 +841,9 @@ void ScalarBitSetTraits<ELFYAML::ELF_SHF>::bitset(IO &IO,
     BCase(SHF_MIPS_MERGE);
     BCase(SHF_MIPS_ADDR);
     BCase(SHF_MIPS_STRING);
+    break;
+  case ELF::EM_V810:
+    BCase(SHF_V810_GPREL);
     break;
   case ELF::EM_X86_64:
     BCase(SHF_X86_64_LARGE);

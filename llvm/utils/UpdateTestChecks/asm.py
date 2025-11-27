@@ -147,6 +147,13 @@ ASM_FUNCTION_SPARC_RE = re.compile(
     flags=(re.M | re.S),
 )
 
+ASM_FUNCTION_V810_RE = re.compile(
+    r'^(?P<func>[^:]+):[ \t]*# @"?(?P=func)"?\n'
+    r"(?P<body>.*?)"
+    r".Lfunc_end[0-9]+:\n",
+    flags=(re.M | re.S),
+)
+
 ASM_FUNCTION_SYSTEMZ_RE = re.compile(
     r'^_?(?P<func>[^:]+):[ \t]*#+[ \t]*@"?(?P=func)"?\n'
     r"(?:[ \t]+.cfi_startproc\n)?"
@@ -468,6 +475,17 @@ def scrub_asm_spirv(asm, args):
     return asm
 
 
+def scrub_asm_v810(asm, args):
+    # Scrub runs of whitespace out of the assembly, but leave the leading
+    # whitespace in place.
+    asm = common.SCRUB_WHITESPACE_RE.sub(r" ", asm)
+    # Expand the tabs used for indentation.
+    asm = string.expandtabs(asm, 2)
+    # Strip trailing whitespace.
+    asm = common.SCRUB_TRAILING_WHITESPACE_RE.sub(r"", asm)
+    return asm
+
+
 def scrub_asm_systemz(asm, args):
     # Scrub runs of whitespace out of the assembly, but leave the leading
     # whitespace in place.
@@ -597,6 +615,7 @@ def get_run_handler(triple):
         "spirv": (scrub_asm_spirv, ASM_FUNCTION_SPIRV_RE),
         "spirv32": (scrub_asm_spirv, ASM_FUNCTION_SPIRV_RE),
         "spirv64": (scrub_asm_spirv, ASM_FUNCTION_SPIRV_RE),
+        "v810": (scrub_asm_v810, ASM_FUNCTION_V810_RE),
         "s390x": (scrub_asm_systemz, ASM_FUNCTION_SYSTEMZ_RE),
         "wasm32": (scrub_asm_wasm, ASM_FUNCTION_WASM_RE),
         "wasm64": (scrub_asm_wasm, ASM_FUNCTION_WASM_RE),

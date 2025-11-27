@@ -225,12 +225,6 @@
 // RUN: %clang_cl --target=i686-pc-win32 -Werror -Wno-msvc-not-found /Oy- -### -- %s 2>&1 | FileCheck -check-prefix=Oy_ %s
 // Oy_: -mframe-pointer=all
 
-// RUN: %clang_cl /Qvec -### -- %s 2>&1 | FileCheck -check-prefix=Qvec %s
-// Qvec: -vectorize-loops
-
-// RUN: %clang_cl /Qvec /Qvec- -### -- %s 2>&1 | FileCheck -check-prefix=Qvec_ %s
-// Qvec_-NOT: -vectorize-loops
-
 // RUN: %clang_cl /showIncludes -### -- %s 2>&1 | FileCheck -check-prefix=showIncludes_ %s
 // showIncludes_: --show-includes
 // showIncludes_: -sys-header-deps
@@ -771,7 +765,6 @@
 
 // RUN: %clang_cl -O2 -### -- %s 2>&1 | FileCheck -check-prefix=NOCLANG %s
 // NOCLANG: "--dependent-lib=libcmt"
-// NOCLANG-SAME: "-vectorize-slp"
 // NOCLANG-NOT: "--dependent-lib=msvcrt"
 
 // RUN: %clang_cl -O2 -MD /clang:-fno-slp-vectorize /clang:-MD /clang:-MF /clang:my_dependency_file.dep /c /Fo%/t/cl-options.obj -### -- %s 2>&1 | FileCheck -DPREFIX=%/t -check-prefix=CLANG %s

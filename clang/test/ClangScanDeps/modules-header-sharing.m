@@ -1,3 +1,4 @@
+// UNSUPPORTED: system-windows
 // There are some edge-cases where Clang depends on knowing the module whose implementation it's currently building.
 // This test makes sure scanner always reports the corresponding module map.
 

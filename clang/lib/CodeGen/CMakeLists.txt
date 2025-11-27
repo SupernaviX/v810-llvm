@@ -150,6 +150,7 @@ add_clang_library(clangCodeGen
   Targets/Sparc.cpp
   Targets/SystemZ.cpp
   Targets/TCE.cpp
+  Targets/V810.cpp
   Targets/VE.cpp
   Targets/WebAssembly.cpp
   Targets/X86.cpp

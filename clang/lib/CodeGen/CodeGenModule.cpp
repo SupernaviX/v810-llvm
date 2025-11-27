@@ -284,6 +284,8 @@ createTargetCodeGenInfo(CodeGenModule &CGM) {
     return createSparcV8TargetCodeGenInfo(CGM);
   case llvm::Triple::sparcv9:
     return createSparcV9TargetCodeGenInfo(CGM);
+  case llvm::Triple::v810:
+    return createV810TargetCodeGenInfo(CGM);
   case llvm::Triple::xcore:
     return createXCoreTargetCodeGenInfo(CGM);
   case llvm::Triple::arc:
@@ -378,7 +380,7 @@ static void checkDataLayoutConsistency(const TargetInfo &Target,
   Check("float", llvm::Type::getFloatingPointTy(Context, *Target.FloatFormat),
         Target.FloatAlign);
   // FIXME: AIX specifies wrong double alignment in DataLayout
-  if (!Triple.isOSAIX()) {
+  if (!Triple.isOSAIX() && !Triple.isV810()) {
     Check("double",
           llvm::Type::getFloatingPointTy(Context, *Target.DoubleFormat),
           Target.DoubleAlign);

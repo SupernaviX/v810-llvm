@@ -14,14 +14,14 @@ void func(void) {
 
 // DEFAULT: store i16 128, ptr {{.*}}, align 2
 // DEFAULT: store i32 32768, ptr {{.*}}, align 4
-// DEFAULT: store i64 2147483648, ptr {{.*}}, align 8
+// DEFAULT: store i64 2147483648, ptr {{.*}}, align 4
 // DEFAULT: store i8  -128, ptr {{.*}}, align 1
 // DEFAULT: store i16 -32768, ptr {{.*}}, align 2
 // DEFAULT: store i32 -2147483648, ptr {{.*}}, align 4
 
 // SAME: store i16 64, ptr {{.*}}, align 2
 // SAME: store i32 16384, ptr {{.*}}, align 4
-// SAME: store i64 1073741824, ptr {{.*}}, align 8
+// SAME: store i64 1073741824, ptr {{.*}}, align 4
 // SAME: store i8  64, ptr {{.*}}, align 1
 // SAME: store i16 16384, ptr {{.*}}, align 2
 // SAME: store i32 1073741824, ptr {{.*}}, align 4

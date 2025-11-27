@@ -51,6 +51,10 @@ static bool isPPCBareMetal(const llvm::Triple &Triple) {
          Triple.getEnvironment() == llvm::Triple::EABI;
 }
 
+static bool isV810BareMetal(const llvm::Triple &Triple) {
+  return Triple.isV810();
+}
+
 static bool findRISCVMultilibs(const Driver &D,
                                const llvm::Triple &TargetTriple,
                                const ArgList &Args, DetectedMultilibs &Result) {
@@ -350,7 +354,7 @@ void BareMetal::findMultilibs(const Driver &D, const llvm::Triple &Triple,
 
 bool BareMetal::handlesTarget(const llvm::Triple &Triple) {
   return arm::isARMEABIBareMetal(Triple) ||
-         aarch64::isAArch64BareMetal(Triple) || isRISCVBareMetal(Triple) ||
+         aarch64::isAArch64BareMetal(Triple) || isRISCVBareMetal(Triple) || isV810BareMetal(Triple) ||
          isPPCBareMetal(Triple);
 }
 
@@ -623,7 +627,7 @@ void baremetal::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   bool NeedCRTs =
-      !Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles);
+      !Triple.isV810() && !Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles);
 
   const char *CRTBegin, *CRTEnd;
   if (NeedCRTs) {

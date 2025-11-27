@@ -1204,6 +1204,7 @@ const EnumEntry<unsigned> ElfMachineType[] = {
   ENUM_ENT(EM_FR30,          "Fujitsu FR30"),
   ENUM_ENT(EM_D10V,          "Mitsubishi D10V"),
   ENUM_ENT(EM_D30V,          "Mitsubishi D30V"),
+  ENUM_ENT(EM_V810,          "NEC v810"),
   ENUM_ENT(EM_V850,          "NEC v850"),
   ENUM_ENT(EM_M32R,          "Renesas M32R (formerly Mitsubishi M32r)"),
   ENUM_ENT(EM_MN10300,       "Matsushita MN10300"),
@@ -1376,6 +1377,10 @@ const EnumEntry<unsigned> ElfMipsSectionFlags[] = {
   ENUM_ENT(SHF_MIPS_STRING,  "")
 };
 
+const EnumEntry<unsigned> ElfV810SectionFlags[] = {
+  ENUM_ENT(SHF_V810_GPREL, "")
+};
+
 const EnumEntry<unsigned> ElfX86_64SectionFlags[] = {
   ENUM_ENT(SHF_X86_64_LARGE, "l")
 };
@@ -1404,6 +1409,10 @@ getSectionFlagsForTarget(unsigned EOSAbi, unsigned EMachine) {
     break;
   case EM_MIPS:
     llvm::append_range(Ret, ElfMipsSectionFlags);
+    break;
+  case EM_V810:
+    Ret.insert(Ret.end(), std::begin(ElfV810SectionFlags),
+               std::end(ElfV810SectionFlags));
     break;
   case EM_X86_64:
     llvm::append_range(Ret, ElfX86_64SectionFlags);

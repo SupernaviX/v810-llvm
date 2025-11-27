@@ -1,7 +1,7 @@
-// RUN: %clang -x c -ffixed-point -S -emit-llvm -o - %s | FileCheck %s
-// RUN: %clang -x c -ffixed-point -S -emit-llvm -o - --target=x86_64-scei-ps4 %s | FileCheck %s
-// RUN: %clang -x c -ffixed-point -S -emit-llvm -o - --target=ppc64 %s | FileCheck %s
-// RUN: %clang -x c -ffixed-point -S -emit-llvm -o - --target=x86_64-scei-ps4 %s | FileCheck %s
+// RUN: %clang -x c -ffixed-point -S -emit-llvm -o - %s | FileCheck %s  -DLONGALIGN=4
+// RUN: %clang -x c -ffixed-point -S -emit-llvm -o - --target=x86_64-scei-ps4 %s | FileCheck %s  -DLONGALIGN=8
+// RUN: %clang -x c -ffixed-point -S -emit-llvm -o - --target=ppc64 %s | FileCheck %s -DLONGALIGN=8
+// RUN: %clang -x c -ffixed-point -S -emit-llvm -o - --target=x86_64-scei-ps4 %s | FileCheck %s -DLONGALIGN=8
 
 /* Primary signed _Accum */
 
@@ -17,7 +17,7 @@ int align_SlA = __alignof(signed long _Accum);
 // CHECK-NEXT: @size_SlA  = {{.*}}global i{{[0-9]+}} 8
 // CHECK-NEXT: @align_SsA = {{.*}}global i{{[0-9]+}} 2
 // CHECK-NEXT: @align_SA  = {{.*}}global i{{[0-9]+}} 4
-// CHECK-NEXT: @align_SlA = {{.*}}global i{{[0-9]+}} 8
+// CHECK-NEXT: @align_SlA = {{.*}}global i{{[0-9]+}} [[LONGALIGN]]
 
 /* Primary unsigned _Accum */
 
@@ -33,7 +33,7 @@ int align_UlA = __alignof(unsigned long _Accum);
 // CHECK-NEXT: @size_UlA  = {{.*}}global i{{[0-9]+}} 8
 // CHECK-NEXT: @align_UsA = {{.*}}global i{{[0-9]+}} 2
 // CHECK-NEXT: @align_UA  = {{.*}}global i{{[0-9]+}} 4
-// CHECK-NEXT: @align_UlA = {{.*}}global i{{[0-9]+}} 8
+// CHECK-NEXT: @align_UlA = {{.*}}global i{{[0-9]+}} [[LONGALIGN]]
 
 /* Primary signed _Fract */
 
@@ -81,7 +81,7 @@ int align_lA = __alignof(long _Accum);
 // CHECK-NEXT: @size_lA   = {{.*}}global i{{[0-9]+}} 8
 // CHECK-NEXT: @align_sA  = {{.*}}global i{{[0-9]+}} 2
 // CHECK-NEXT: @align_A   = {{.*}}global i{{[0-9]+}} 4
-// CHECK-NEXT: @align_lA  = {{.*}}global i{{[0-9]+}} 8
+// CHECK-NEXT: @align_lA  = {{.*}}global i{{[0-9]+}} [[LONGALIGN]]
 
 /* Aliased _Fract */
 
@@ -113,7 +113,7 @@ int align_SatSlA = __alignof(_Sat signed long _Accum);
 // CHECK-NEXT: @size_SatSlA  = {{.*}}global i{{[0-9]+}} 8
 // CHECK-NEXT: @align_SatSsA = {{.*}}global i{{[0-9]+}} 2
 // CHECK-NEXT: @align_SatSA  = {{.*}}global i{{[0-9]+}} 4
-// CHECK-NEXT: @align_SatSlA = {{.*}}global i{{[0-9]+}} 8
+// CHECK-NEXT: @align_SatSlA = {{.*}}global i{{[0-9]+}} [[LONGALIGN]]
 
 /* Saturated unsigned _Accum */
 
@@ -129,7 +129,7 @@ int align_SatUlA = __alignof(_Sat unsigned long _Accum);
 // CHECK-NEXT: @size_SatUlA  = {{.*}}global i{{[0-9]+}} 8
 // CHECK-NEXT: @align_SatUsA = {{.*}}global i{{[0-9]+}} 2
 // CHECK-NEXT: @align_SatUA  = {{.*}}global i{{[0-9]+}} 4
-// CHECK-NEXT: @align_SatUlA = {{.*}}global i{{[0-9]+}} 8
+// CHECK-NEXT: @align_SatUlA = {{.*}}global i{{[0-9]+}} [[LONGALIGN]]
 
 /* Saturated signed _Fract */
 
@@ -177,7 +177,7 @@ int align_SatlA = __alignof(_Sat long _Accum);
 // CHECK-NEXT: @size_SatlA   = {{.*}}global i{{[0-9]+}} 8
 // CHECK-NEXT: @align_SatsA  = {{.*}}global i{{[0-9]+}} 2
 // CHECK-NEXT: @align_SatA   = {{.*}}global i{{[0-9]+}} 4
-// CHECK-NEXT: @align_SatlA  = {{.*}}global i{{[0-9]+}} 8
+// CHECK-NEXT: @align_SatlA  = {{.*}}global i{{[0-9]+}} [[LONGALIGN]]
 
 /* Aliased saturated _Fract */
 

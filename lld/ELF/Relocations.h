@@ -124,6 +124,7 @@ enum RelExpr {
   RE_RISCV_ADD,
   RE_RISCV_LEB128,
   RE_RISCV_PC_INDIRECT,
+  RE_V810_GP,
   // Same as R_PC but with page-aligned semantics.
   RE_LOONGARCH_PAGE_PC,
   // Same as R_PLT_PC but with page-aligned semantics.

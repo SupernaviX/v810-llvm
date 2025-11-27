@@ -672,6 +672,7 @@ def get_triple_from_march(march):
         "mips": "mips",
         "nvptx64": "nvptx64",
         "sparc": "sparc",
+        "v810": "v810",
         "hexagon": "hexagon",
         "ve": "ve",
     }

@@ -1007,6 +1007,9 @@ uint64_t InputSectionBase::getRelocTargetVA(Ctx &ctx, const Relocation &r,
     return ctx.in.got->getTlsIndexOff() + a;
   case R_TLSLD_PC:
     return ctx.in.got->getTlsIndexVA() + a - p;
+  case RE_V810_GP:
+    // Relative to the value of __gp
+    return r.sym->getVA(ctx, a) - ctx.sym.v810Gp->getVA(ctx);
   default:
     llvm_unreachable("invalid expression");
   }

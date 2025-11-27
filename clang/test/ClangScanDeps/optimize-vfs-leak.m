@@ -1,3 +1,4 @@
+// UNSUPPORTED: system-windows
 // This test checks that VFS usage doesn't leak between modules.
 
 // RUN: rm -rf %t && split-file %s %t

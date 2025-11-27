@@ -1,3 +1,4 @@
+// UNSUPPORTED: system-windows
 // RUN: rm -rf %t.dir
 // RUN: split-file %s %t.dir
 // RUN: sed -e "s|DIR|%/t.dir|g" %t.dir/build/compile-commands.json.in > %t.dir/build/compile-commands.json

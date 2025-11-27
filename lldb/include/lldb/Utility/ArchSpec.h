@@ -208,6 +208,8 @@ public:
 
     eCore_sparc9_generic,
 
+    eCore_v810_generic,
+
     eCore_x86_32_i386,
     eCore_x86_32_i486,
     eCore_x86_32_i486sx,

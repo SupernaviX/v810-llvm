@@ -495,6 +495,10 @@ static std::string computeWebAssemblyDataLayout(const Triple &TT) {
                                       "i128:128-n32:64-S128-ni:1:10:20");
 }
 
+static std::string computeV810DataLayout(const Triple &T) {
+  return "e-p:32:32-i32:32-i64:32-f32:32-a:0:32-n32:32-S32";
+}
+
 static std::string computeVEDataLayout(const Triple &T) {
   // Aurora VE is little endian
   std::string Ret = "e";
@@ -611,6 +615,8 @@ std::string Triple::computeDataLayout(StringRef ABIName) const {
   case Triple::wasm32:
   case Triple::wasm64:
     return computeWebAssemblyDataLayout(*this);
+  case Triple::v810:
+    return computeV810DataLayout(*this);
   case Triple::ve:
     return computeVEDataLayout(*this);
 

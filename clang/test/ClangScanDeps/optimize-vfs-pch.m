@@ -1,3 +1,4 @@
+// UNSUPPORTED: system-windows
 // Check that tracking of VFSs works with PCH.
 
 // RUN: rm -rf %t

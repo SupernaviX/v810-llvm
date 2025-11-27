@@ -325,6 +325,7 @@ enum {
   EM_VE = 251,            // NEC SX-Aurora VE
   EM_CSKY = 252,          // C-SKY 32-bit processor
   EM_LOONGARCH = 258,     // LoongArch
+  EM_V810 = 36993        // NEC v810
 };
 
 // Object file classes.
@@ -760,6 +761,11 @@ enum : unsigned {
 // ELF Relocation type for Sparc.
 enum {
 #include "ELFRelocs/Sparc.def"
+};
+
+// ELF Relocation type for V810.
+enum {
+#include "ELFRelocs/V810.def"
 };
 
 // AMDGPU specific e_flags.
@@ -1313,6 +1319,9 @@ enum : unsigned {
   // All sections with the GPREL flag are grouped into a global data area
   // for faster accesses
   SHF_HEX_GPREL = 0x10000000,
+
+  // Section must be addressible relative to GP.
+  SHF_V810_GPREL = 0x10000000,
 
   // Section contains text/data which may be replicated in other sections.
   // Linker must retain only one copy.

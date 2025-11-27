@@ -1,7 +1,7 @@
-// RUN: %clang_cc1 -xc   -O2 -triple thumbv7a-unknown-windows-eabi -fms-extensions -emit-llvm < %s | FileCheck %s
-// RUN: %clang_cc1 -xc++ -O2 -triple thumbv7a-unknown-windows-eabi -fms-extensions -emit-llvm < %s | FileCheck %s
-// RUN: %clang_cc1 -xc   -O2 -triple x86_64-unknown-linux-gnu -fms-extensions -emit-llvm < %s | FileCheck %s
-// RUN: %clang_cc1 -xc++ -O2 -triple x86_64-unknown-linux-gnu -fms-extensions -emit-llvm < %s | FileCheck %s
+// RUN: %clang_cc1 -xc   -O2 -triple thumbv7a-unknown-windows-eabi -fms-extensions -mllvm -instcombine-disable-v810-fix -emit-llvm < %s | FileCheck %s
+// RUN: %clang_cc1 -xc++ -O2 -triple thumbv7a-unknown-windows-eabi -fms-extensions -mllvm -instcombine-disable-v810-fix -emit-llvm < %s | FileCheck %s
+// RUN: %clang_cc1 -xc   -O2 -triple x86_64-unknown-linux-gnu -fms-extensions -mllvm -instcombine-disable-v810-fix -emit-llvm < %s | FileCheck %s
+// RUN: %clang_cc1 -xc++ -O2 -triple x86_64-unknown-linux-gnu -fms-extensions -mllvm -instcombine-disable-v810-fix -emit-llvm < %s | FileCheck %s
 
 struct S1 {
   unsigned long x;

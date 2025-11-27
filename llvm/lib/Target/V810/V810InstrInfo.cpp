@@ -13,7 +13,7 @@ using namespace llvm;
 void V810InstrInfo::anchor() {}
 
 V810InstrInfo::V810InstrInfo(const V810Subtarget &ST)
-  : V810GenInstrInfo(ST, V810::ADJCALLSTACKDOWN, V810::ADJCALLSTACKUP), RI() {}
+  : V810GenInstrInfo(ST, RI, V810::ADJCALLSTACKDOWN, V810::ADJCALLSTACKUP), RI() {}
 
 void V810InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator I, const DebugLoc &DL,
@@ -55,7 +55,6 @@ void V810InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator I,
                                         Register SrcReg, bool isKill, int FrameIndex,
                                         const TargetRegisterClass *RC,
-                                        const TargetRegisterInfo *TRI,
                                         Register VReg,
                                         MachineInstr::MIFlag Flags) const {
   DebugLoc DL;
@@ -76,7 +75,6 @@ void V810InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator I,
                                          Register DestReg, int FrameIndex,
                                          const TargetRegisterClass *RC,
-                                         const TargetRegisterInfo *TRI,
                                          Register VReg,
                                          MachineInstr::MIFlag Flags) const {
   DebugLoc DL;

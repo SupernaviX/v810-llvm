@@ -120,14 +120,14 @@ jobs:
           if [ "${{ runner.os }}" == "macOS" ]; then
             # Workaround test failure on some lld tests on MacOS
             # https://github.com/llvm/llvm-project/issues/81967
-            extra_cmake_args="-DLLVM_DISABLE_ASSEMBLY_FILES=ON"
+            extra_cmake_args="-DLLVM_DISABLE_ASSEMBLY_FILES=ON -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
           fi
           echo "llvm-builddir=$builddir" >> "$GITHUB_OUTPUT"
           cmake -G Ninja \
                 -B "$builddir" \
                 -S llvm \
                 -DLLVM_DEFAULT_TARGET_TRIPLE="v810-unknown-vb" \
-                -DLLVM_TARGETS_TO_BUILD="ARM;X86;V810" \
+                -DLLVM_TARGETS_TO_BUILD="AArch64;X86;V810" \
                 -DLLVM_ENABLE_PROJECTS="${{ inputs.projects }}" \
                 -DCMAKE_BUILD_TYPE=Release \
                 -DLLVM_ENABLE_ASSERTIONS=ON \

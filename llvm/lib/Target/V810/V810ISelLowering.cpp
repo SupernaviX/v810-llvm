@@ -33,7 +33,7 @@ namespace {
 
 V810TargetLowering::V810TargetLowering(const TargetMachine &TM,
                                        const V810Subtarget &STI)
-    : TargetLowering(TM), Subtarget(&STI) {
+    : TargetLowering(TM, STI), Subtarget(&STI) {
 
   setBooleanContents(BooleanContent::ZeroOrOneBooleanContent);  
 

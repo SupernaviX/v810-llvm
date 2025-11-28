@@ -37,8 +37,6 @@ unsigned Object::getMachine() const {
     return *Header.Machine;
   return llvm::ELF::EM_NONE;
 }
-
-constexpr StringRef SectionHeaderTable::TypeStr;
 } // namespace ELFYAML
 
 namespace yaml {
@@ -673,7 +671,7 @@ void ScalarBitSetTraits<ELFYAML::ELF_EF>::bitset(IO &IO,
       for (unsigned K = ELF::EF_AMDGPU_GENERIC_VERSION_MIN;
            K <= ELF::EF_AMDGPU_GENERIC_VERSION_MAX; ++K) {
         std::string Key = "EF_AMDGPU_GENERIC_VERSION_V" + std::to_string(K);
-        IO.maskedBitSetCase(Value, Key.c_str(),
+        IO.maskedBitSetCase(Value, Key,
                             K << ELF::EF_AMDGPU_GENERIC_VERSION_OFFSET,
                             ELF::EF_AMDGPU_GENERIC_VERSION);
       }
@@ -1890,7 +1888,7 @@ void MappingTraits<ELFYAML::BBAddrMapEntry>::mapping(
     IO &IO, ELFYAML::BBAddrMapEntry &E) {
   assert(IO.getContext() && "The IO context is not initialized");
   IO.mapRequired("Version", E.Version);
-  IO.mapOptional("Feature", E.Feature, Hex8(0));
+  IO.mapOptional("Feature", E.Feature, Hex16(0));
   IO.mapOptional("NumBBRanges", E.NumBBRanges);
   IO.mapOptional("BBRanges", E.BBRanges);
 }
@@ -1924,6 +1922,7 @@ void MappingTraits<ELFYAML::PGOAnalysisMapEntry::PGOBBEntry>::mapping(
     IO &IO, ELFYAML::PGOAnalysisMapEntry::PGOBBEntry &E) {
   assert(IO.getContext() && "The IO context is not initialized");
   IO.mapOptional("BBFreq", E.BBFreq);
+  IO.mapOptional("PostLinkBBFreq", E.PostLinkBBFreq);
   IO.mapOptional("Successors", E.Successors);
 }
 
@@ -1933,6 +1932,7 @@ void MappingTraits<ELFYAML::PGOAnalysisMapEntry::PGOBBEntry::SuccessorEntry>::
   assert(IO.getContext() && "The IO context is not initialized");
   IO.mapRequired("ID", E.ID);
   IO.mapRequired("BrProb", E.BrProb);
+  IO.mapOptional("PostLinkBrFreq", E.PostLinkBrFreq);
 }
 
 void MappingTraits<ELFYAML::GnuHashHeader>::mapping(IO &IO,

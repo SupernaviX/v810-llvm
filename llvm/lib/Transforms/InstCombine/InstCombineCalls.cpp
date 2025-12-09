@@ -3824,7 +3824,9 @@ Instruction *InstCombinerImpl::visitCallInst(CallInst &CI) {
         if (VecToReduceCount.isFixed()) {
           unsigned VectorSize = VecToReduceCount.getFixedValue();
           return BinaryOperator::CreateMul(
-              Splat, ConstantInt::get(Splat->getType(), VectorSize));
+              Splat,
+              ConstantInt::get(Splat->getType(), VectorSize, /*IsSigned=*/false,
+                               /*ImplicitTrunc=*/true));
         }
       }
     }
@@ -4028,6 +4030,27 @@ Instruction *InstCombinerImpl::visitCallInst(CallInst &CI) {
                     ConstantInt::get(OpTy, Op1->usub_sat(*Op0))}));
     }
     break;
+  }
+  case Intrinsic::experimental_get_vector_length: {
+    // get.vector.length(Cnt, MaxLanes) --> Cnt when Cnt <= MaxLanes
+    unsigned BitWidth =
+        std::max(II->getArgOperand(0)->getType()->getScalarSizeInBits(),
+                 II->getType()->getScalarSizeInBits());
+    ConstantRange Cnt =
+        computeConstantRangeIncludingKnownBits(II->getArgOperand(0), false,
+                                               SQ.getWithInstruction(II))
+            .zextOrTrunc(BitWidth);
+    ConstantRange MaxLanes = cast<ConstantInt>(II->getArgOperand(1))
+                                 ->getValue()
+                                 .zextOrTrunc(Cnt.getBitWidth());
+    if (cast<ConstantInt>(II->getArgOperand(2))->isOne())
+      MaxLanes = MaxLanes.multiply(
+          getVScaleRange(II->getFunction(), Cnt.getBitWidth()));
+
+    if (Cnt.icmp(CmpInst::ICMP_ULE, MaxLanes))
+      return replaceInstUsesWith(
+          *II, Builder.CreateZExtOrTrunc(II->getArgOperand(0), II->getType()));
+    return nullptr;
   }
   default: {
     // Handle target specific intrinsics

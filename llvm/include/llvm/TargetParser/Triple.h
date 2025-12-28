@@ -111,7 +111,8 @@ public:
     renderscript64, // 64-bit RenderScript
     ve,             // NEC SX-Aurora Vector Engine
     v810,           // NEC V810
-    LastArchType = v810
+    v830,           // NEC V830
+    LastArchType = v830
   };
   enum SubArchType {
     NoSubArch,
@@ -1125,6 +1126,12 @@ public:
 
   /// Tests whether the target is V810.
   bool isV810() const { return getArch() == Triple::v810; }
+
+  /// Tests whether the target is V830.
+  bool isV830() const { return getArch() == Triple::v830; }
+
+  /// Tests whether the target is an NEC architecture
+  bool isNEC() const { return isV810() || isV830(); }
 
   /// Tests whether the target is x86 (32- or 64-bit).
   bool isX86() const {

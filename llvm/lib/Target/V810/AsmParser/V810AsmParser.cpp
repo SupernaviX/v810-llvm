@@ -634,6 +634,7 @@ bool V810AsmParser::parseImm16Expression(const MCExpr *&Res, SMLoc &EndLoc) {
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeV810AsmParser() {
   RegisterMCAsmParser<V810AsmParser> X(getTheV810Target());
+  RegisterMCAsmParser<V810AsmParser> Y(getTheV830Target());
 }
 
 #define GET_REGISTER_MATCHER

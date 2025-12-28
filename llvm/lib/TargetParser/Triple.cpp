@@ -83,6 +83,7 @@ StringRef Triple::getArchTypeName(ArchType Kind) {
   case thumbeb:        return "thumbeb";
   case ve:             return "ve";
   case v810:           return "v810";
+  case v830:           return "v830";
   case wasm32:         return "wasm32";
   case wasm64:         return "wasm64";
   case x86:            return "i386";
@@ -486,6 +487,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
       .Case("thumb", thumb)
       .Case("thumbeb", thumbeb)
       .Case("v810", v810)
+      .Case("v830", v830)
       .Case("x86", x86)
       .Case("i386", x86)
       .Case("x86-64", x86_64)
@@ -1017,6 +1019,7 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
   case Triple::thumbeb:
   case Triple::ve:
   case Triple::v810:
+  case Triple::v830:
   case Triple::xcore:
   case Triple::xtensa:
     return Triple::ELF;
@@ -1742,6 +1745,7 @@ unsigned Triple::getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb:
   case llvm::Triple::v810:
+  case llvm::Triple::v830:
   case llvm::Triple::wasm32:
   case llvm::Triple::x86:
   case llvm::Triple::xcore:
@@ -1853,6 +1857,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::thumb:
   case Triple::thumbeb:
   case Triple::v810:
+  case Triple::v830:
   case Triple::wasm32:
   case Triple::x86:
   case Triple::xcore:
@@ -1910,6 +1915,7 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::tce:
   case Triple::tcele:
   case Triple::v810:
+  case Triple::v830:
   case Triple::xcore:
   case Triple::xtensa:
     T.setArch(UnknownArch);
@@ -2129,6 +2135,7 @@ bool Triple::isLittleEndian() const {
   case Triple::thumb:
   case Triple::ve:
   case Triple::v810:
+  case Triple::v830:
   case Triple::wasm32:
   case Triple::wasm64:
   case Triple::x86:

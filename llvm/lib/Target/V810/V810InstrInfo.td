@@ -3,6 +3,12 @@ include "V810InstrFormats.td"
 def IsNintendo : Predicate<"Subtarget->isNintendo()">,
                  AssemblerPredicate<(all_of FeatureNintendo)>;
 
+def IsV810 : Predicate<"!Subtarget->isV830()">,
+             AssemblerPredicate<(all_of (not FeatureV830))>;
+
+def IsV830 : Predicate<"Subtarget->isV830()">,
+             AssemblerPredicate<(all_of FeatureV830)>;
+
 // split a 32-bit immediate into low and high bits
 def IMM32_LO16 : SDNodeXForm<imm, [{
   int64_t lo = EvalLo(N->getSExtValue());
@@ -690,14 +696,16 @@ class BitstringInst<bits<5> subop, string asmstr>
   let mayStore = 1;
 }
 
-def ANDBSU  : BitstringInst<0b01001, "andbsu">;
-def ANDNBSU : BitstringInst<0b01101, "andnbsu">;
-def MOVBSU  : BitstringInst<0b01011, "movbsu">;
-def NOTBSU  : BitstringInst<0b01111, "notbsu">;
-def ORBSU   : BitstringInst<0b01000, "orbsu">;
-def ORNBSU  : BitstringInst<0b01100, "ornbsu">;
-def XORBSU  : BitstringInst<0b01010, "xorbsu">;
-def XORNBSU : BitstringInst<0b01110, "xornbsu">;
+let Predicates = [IsV810] in {
+  def ANDBSU  : BitstringInst<0b01001, "andbsu">;
+  def ANDNBSU : BitstringInst<0b01101, "andnbsu">;
+  def MOVBSU  : BitstringInst<0b01011, "movbsu">;
+  def NOTBSU  : BitstringInst<0b01111, "notbsu">;
+  def ORBSU   : BitstringInst<0b01000, "orbsu">;
+  def ORNBSU  : BitstringInst<0b01100, "ornbsu">;
+  def XORBSU  : BitstringInst<0b01010, "xorbsu">;
+  def XORNBSU : BitstringInst<0b01110, "xornbsu">;
+}
 
 // and bitstring searches
 class BitstringSearchInst<bits<5> subop, string asmstr>
@@ -710,10 +718,12 @@ class BitstringSearchInst<bits<5> subop, string asmstr>
   let Itinerary = IIC_Load;
 }
 
-def SCH0BSD : BitstringSearchInst<0b00001, "sch0bsd">;
-def SCH0BSU : BitstringSearchInst<0b00000, "sch0bsu">;
-def SCH1BSD : BitstringSearchInst<0b00011, "sch1bsd">;
-def SCH1BSU : BitstringSearchInst<0b00010, "sch1bsu">;
+let Predicates = [IsV810] in {
+  def SCH0BSD : BitstringSearchInst<0b00001, "sch0bsd">;
+  def SCH0BSU : BitstringSearchInst<0b00000, "sch0bsu">;
+  def SCH1BSD : BitstringSearchInst<0b00011, "sch1bsd">;
+  def SCH1BSU : BitstringSearchInst<0b00010, "sch1bsu">;
+}
 
 // the one atomic operator
 // $rcmp is always the same as r2, and rswap is always R30.

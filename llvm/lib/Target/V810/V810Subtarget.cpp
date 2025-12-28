@@ -19,11 +19,18 @@ V810Subtarget &V810Subtarget::initializeSubtargetDependencies(const Triple &TT,
                                                               StringRef CPU,
                                                               StringRef FS) {
   IsNintendo = false;
+  IsV830 = false;
   EnableGPRelativeRAM = false;
   EnableAppRegisters = false;
 
   StringRef CPUName = getCPUName(TT, CPU);
   ParseSubtargetFeatures(CPUName, /*TuneCPU*/ CPUName, FS);
+
+  if (!IsV830 && TT.isV830()) {
+    FeatureBitset Features = getFeatureBits();
+    setFeatureBits(Features.set(V810::FeatureV830));
+    IsV830 = true;
+  }
 
   return *this;
 }

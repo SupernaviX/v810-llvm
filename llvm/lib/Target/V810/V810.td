@@ -12,6 +12,9 @@ def FeatureAppRegisters
   : SubtargetFeature<"app-regs", "EnableAppRegisters", "true",
                      "Allow r1, r2, r4, and r5 to be allocated if not otherwise used.">;
 
+def FeatureV830
+  : SubtargetFeature<"v830", "IsV830", "true",
+                     "Use the v830 instruction set">;
 
 include "V810RegisterInfo.td"
 include "V810CallingConv.td"

@@ -3267,14 +3267,14 @@ def isSPIRV : RuntimeLibcallPredicate<"TT.isSPIRV()">;
 def SPIRVSystemLibrary : SystemRuntimeLibrary<isSPIRV, (add memset, memcpy)>;
 
 //===----------------------------------------------------------------------===//
-// V810 Runtime Libcalls
+// V810/V830 Runtime Libcalls
 //===----------------------------------------------------------------------===//
 
-def isV810 : RuntimeLibcallPredicate<"TT.isV810()">;
+def isNEC : RuntimeLibcallPredicate<"TT.isNEC()">;
 
 def __memcpy_wordaligned : RuntimeLibcallImpl<MEMCPY_WORDALIGNED>;
 
-def V810SystemLibrary : SystemRuntimeLibrary<isV810, (add DefaultLibcallImpls32, memcpy, memset, __memcpy_wordaligned)>;
+def NECSystemLibrary : SystemRuntimeLibrary<isNEC, (add DefaultLibcallImpls32, memcpy, memset, __memcpy_wordaligned)>;
 
 //===----------------------------------------------------------------------===//
 // Windows Runtime Libcalls

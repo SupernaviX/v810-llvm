@@ -1,5 +1,5 @@
-# MOS.cmake
-# Configure llvm-mos for building a distribution
+# V810.cmake
+# Configure llvm-v810 for building a distribution
 # Usage for configuring:
 #   cmake -C [path-to-this-file] ...
 
@@ -11,13 +11,18 @@ set(LLVM_ENABLE_ZSTD "OFF" CACHE STRING "")
 
 set(LLVM_ENABLE_RUNTIMES compiler-rt CACHE STRING "")
 
-set(LLVM_BUILTIN_TARGETS v810-unknown-vb CACHE STRING "")
-set(LLVM_RUNTIME_TARGETS v810-unknown-vb CACHE STRING "")
+set(LLVM_BUILTIN_TARGETS "v810-unknown-vb;v830-unknown-generic" CACHE STRING "")
+set(LLVM_RUNTIME_TARGETS "v810-unknown-vb;v830-unknown-generic" CACHE STRING "")
 set(BUILTINS_v810-unknown-vb_COMPILER_RT_BAREMETAL_BUILD ON CACHE BOOL "")
 set(BUILTINS_v810-unknown-vb_COMPILER_RT_BUILTINS_ENABLE_PIC OFF CACHE BOOL "")
 set(BUILTINS_v810-unknown-vb_COMPILER_RT_BUILD_BUILTINS ON CACHE BOOL "")
 set(BUILTINS_v810-unknown-vb_COMPILER_RT_BUILD_CRT OFF CACHE BOOL "")
 set(BUILTINS_v810-unknown-vb_CMAKE_BUILD_TYPE Release CACHE BOOL "")
+set(BUILTINS_v830-unknown-generic_COMPILER_RT_BAREMETAL_BUILD ON CACHE BOOL "")
+set(BUILTINS_v830-unknown-generic_COMPILER_RT_BUILTINS_ENABLE_PIC OFF CACHE BOOL "")
+set(BUILTINS_v830-unknown-generic_COMPILER_RT_BUILD_BUILTINS ON CACHE BOOL "")
+set(BUILTINS_v830-unknown-generic_COMPILER_RT_BUILD_CRT OFF CACHE BOOL "")
+set(BUILTINS_v830-unknown-generic_CMAKE_BUILD_TYPE Release CACHE BOOL "")
 
 set(LLVM_DEFAULT_TARGET_TRIPLE v810-unknown-vb CACHE STRING "")
 

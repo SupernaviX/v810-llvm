@@ -3,7 +3,7 @@ concurrency: compiler-package
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, v830]
 jobs:
   package:
     runs-on: ${{ matrix.os }}
@@ -66,19 +66,25 @@ jobs:
 
       - name: Bundle Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: tar -cJvf llvm-v810-linux-main.tar.xz llvm-v810
+        run: tar -cJvf llvm-v810-linux-${{ env.BRANCH_NAME }}.tar.xz llvm-v810
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
       - name: Bundle Windows
         if: startsWith(matrix.os, 'windows')
-        run: 7z a llvm-v810-windows-main.7z llvm-v810
+        run: 7z a llvm-v810-windows-${{ env.BRANCH_NAME }}.7z llvm-v810
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
       - name: Bundle macOS
         if: startsWith(matrix.os, 'macos')
-        run: tar -cJvf llvm-v810-darwin-main.tar.xz llvm-v810
+        run: tar -cJvf llvm-v810-darwin-${{ env.BRANCH_NAME }}.tar.xz llvm-v810
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
       - name: Archive Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
-          path: llvm-v810-*-main.*
+          path: llvm-v810-*-${{ github.head_ref || github.ref_name }}.*
 
   release:
     runs-on: ubuntu-22.04
@@ -100,8 +106,21 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: ubuntu-22.04
+      - name: Prerelease
+        uses: softprops/action-gh-release@v1
+        if: (github.head_ref || github.ref_name) == 'v830'
+        with:
+          body: "Compiler build for v830"
+          name: "${{ steps.getDate.outputs.TODAY }}"
+          tag_name: "llvm-v810-${{ steps.getDate.outputs.TODAY }}-v830"
+          prerelease: true
+          files: |
+            llvm-v810-windows-v830.7z
+            llvm-v810-darwin-v830.tar.xz
+            llvm-v810-linux-v830.tar.xz
       - name: Release
         uses: softprops/action-gh-release@v1
+        if: (github.head_ref || github.ref_name) == 'main'
         with:
           body: "Compiler build"
           name: "${{ steps.getDate.outputs.TODAY }}"

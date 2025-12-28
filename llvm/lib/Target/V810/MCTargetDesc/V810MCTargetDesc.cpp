@@ -45,7 +45,14 @@ createV810MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   if (CPU.empty() && TT.getOSAndEnvironmentName() == "vb") {
     CPU = "vb";
   }
-  return createV810MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
+  MCSubtargetInfo *STI =
+      createV810MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
+  if (TT.isV830() && !STI->hasFeature(V810::FeatureV830)) {
+    FeatureBitset Features = STI->getFeatureBits();
+    STI->setFeatureBits(Features.set(V810::FeatureV830));
+  }
+
+  return STI;
 }
 
 static MCTargetStreamer *
@@ -75,33 +82,34 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeV810TargetMC() {
   // Register the MC asm info.
   RegisterMCAsmInfoFn X(getTheV810Target(), createV810MCAsmInfo);
 
-  Target *T = &getTheV810Target();
+  for (Target *T :
+       {&getTheV810Target(), &getTheV830Target()}) {
+    // Register the MC instruction info.
+    TargetRegistry::RegisterMCInstrInfo(*T, createV810MCInstrInfo);
 
-  // Register the MC instruction info.
-  TargetRegistry::RegisterMCInstrInfo(*T, createV810MCInstrInfo);
+    // Register the MC register info.
+    TargetRegistry::RegisterMCRegInfo(*T, createV810MCRegisterInfo);
 
-  // Register the MC register info.
-  TargetRegistry::RegisterMCRegInfo(*T, createV810MCRegisterInfo);
+    // Register the MC subtarget info.
+    TargetRegistry::RegisterMCSubtargetInfo(*T, createV810MCSubtargetInfo);
 
-  // Register the MC subtarget info.
-  TargetRegistry::RegisterMCSubtargetInfo(*T, createV810MCSubtargetInfo);
+    // Register the MC Code Emitter.
+    TargetRegistry::RegisterMCCodeEmitter(*T, createV810MCCodeEmitter);
 
-  // Register the MC Code Emitter.
-  TargetRegistry::RegisterMCCodeEmitter(*T, createV810MCCodeEmitter);
+    // Register the asm backend.
+    TargetRegistry::RegisterMCAsmBackend(*T, createV810AsmBackend);
 
-  // Register the asm backend.
-  TargetRegistry::RegisterMCAsmBackend(*T, createV810AsmBackend);
+    // Register the object target streamer.
+    TargetRegistry::RegisterObjectTargetStreamer(*T,
+                                                  createObjectTargetStreamer);
 
-  // Register the object target streamer.
-  TargetRegistry::RegisterObjectTargetStreamer(*T,
-                                                createObjectTargetStreamer);
+    // Register the asm streamer.
+    TargetRegistry::RegisterAsmTargetStreamer(*T, createTargetAsmStreamer);
 
-  // Register the asm streamer.
-  TargetRegistry::RegisterAsmTargetStreamer(*T, createTargetAsmStreamer);
+    // Register the null streamer.
+    TargetRegistry::RegisterNullTargetStreamer(*T, createNullTargetStreamer);
 
-  // Register the null streamer.
-  TargetRegistry::RegisterNullTargetStreamer(*T, createNullTargetStreamer);
-
-  // Register the MCInstPrinter
-  TargetRegistry::RegisterMCInstPrinter(*T, createV810MCInstPrinter);
+    // Register the MCInstPrinter
+    TargetRegistry::RegisterMCInstPrinter(*T, createV810MCInstPrinter);
+  }
 }

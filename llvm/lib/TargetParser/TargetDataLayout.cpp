@@ -616,6 +616,7 @@ std::string Triple::computeDataLayout(StringRef ABIName) const {
   case Triple::wasm64:
     return computeWebAssemblyDataLayout(*this);
   case Triple::v810:
+  case Triple::v830:
     return computeV810DataLayout(*this);
   case Triple::ve:
     return computeVEDataLayout(*this);

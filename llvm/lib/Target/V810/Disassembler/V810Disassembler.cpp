@@ -38,6 +38,8 @@ static MCDisassembler *createV810Disassembler(const Target &T,
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeV810Disassembler() {
   TargetRegistry::RegisterMCDisassembler(getTheV810Target(),
                                          createV810Disassembler);
+  TargetRegistry::RegisterMCDisassembler(getTheV830Target(),
+                                         createV810Disassembler);
 }
 
 static const unsigned GenRegDecoderTable[] = {

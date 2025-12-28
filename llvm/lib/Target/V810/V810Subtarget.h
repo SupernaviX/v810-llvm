@@ -19,6 +19,7 @@ private:
   bool IsNintendo;
   bool EnableGPRelativeRAM;
   bool EnableAppRegisters;
+  bool IsV830;
 
   V810InstrInfo InstrInfo;
   V810TargetLowering TLInfo;
@@ -47,6 +48,8 @@ public:
   }
 
   bool isNintendo() const { return IsNintendo; }
+
+  bool isV830() const { return IsV830; }
 
   bool enableGPRelativeRAM() const { return EnableGPRelativeRAM; }
 

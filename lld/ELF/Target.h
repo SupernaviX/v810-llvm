@@ -209,6 +209,7 @@ void setRISCVTargetInfo(Ctx &);
 void setSPARCV9TargetInfo(Ctx &);
 void setSystemZTargetInfo(Ctx &);
 void setV810TargetInfo(Ctx &);
+void setV830TargetInfo(Ctx &);
 void setX86TargetInfo(Ctx &);
 void setX86_64TargetInfo(Ctx &);
 

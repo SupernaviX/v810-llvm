@@ -1326,6 +1326,8 @@ StringRef ELFObjectFile<ELFT>::getFileFormatName() const {
       return "elf32-xtensa";
     case ELF::EM_V810:
       return "elf32-v810";
+    case ELF::EM_V830:
+      return "elf32-v830";
     default:
       return "elf32-unknown";
     }
@@ -1461,6 +1463,9 @@ template <class ELFT> Triple::ArchType ELFObjectFile<ELFT>::getArch() const {
 
   case ELF::EM_V810:
     return Triple::v810;
+
+  case ELF::EM_V830:
+    return Triple::v830;
 
   default:
     return Triple::UnknownArch;

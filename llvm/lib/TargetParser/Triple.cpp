@@ -636,6 +636,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
           .Case("tce", Triple::tce)
           .Case("tcele", Triple::tcele)
           .Case("v810", Triple::v810)
+          .Case("v830", Triple::v830)
           .Case("xcore", Triple::xcore)
           .Case("nvptx", Triple::nvptx)
           .Case("nvptx64", Triple::nvptx64)

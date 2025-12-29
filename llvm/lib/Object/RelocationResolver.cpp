@@ -912,6 +912,7 @@ getRelocationResolver(const ObjectFile &Obj) {
     case Triple::csky:
       return {supportsCSKY, resolveCSKY};
     case Triple::v810:
+    case Triple::v830:
       return {supportsV810, resolveV810};
     default:
       if (isAMDGPU(Obj))

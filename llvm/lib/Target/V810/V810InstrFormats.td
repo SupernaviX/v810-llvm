@@ -138,3 +138,22 @@ class FormatVII<bits<6> subop, dag outs, dag ins, string asmstr, list<dag> patte
   let Inst{9-5} = r2;
   let Inst{4-0} = r1;
 }
+
+class FormatVIII<bits<6> subop, dag outs, dag ins, string asmstr, list<dag> pattern, list<SchedReadWrite> schedrw>
+    : InstV810<outs, ins, asmstr, pattern>,
+      Sched<schedrw> {
+  field bits<32> Inst;
+  let Size = 4;
+
+  bits<6> op = 0b111110;
+  bits<5> r3;
+  bits<5> r2;
+  bits<5> r1;
+
+  let Inst{31-26} = subop;
+  let Inst{25-21} = 0;
+  let Inst{20-16} = r3;
+  let Inst{15-10} = op;
+  let Inst{9-5} = r2;
+  let Inst{4-0} = r1;
+}

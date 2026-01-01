@@ -1,13 +1,6 @@
 include "V810InstrFormats.td"
 
-def IsNintendo : Predicate<"Subtarget->isNintendo()">,
-                 AssemblerPredicate<(all_of FeatureNintendo)>;
-
-def IsV810 : Predicate<"!Subtarget->isV830()">,
-             AssemblerPredicate<(all_of (not FeatureV830))>;
-
-def IsV830 : Predicate<"Subtarget->isV830()">,
-             AssemblerPredicate<(all_of FeatureV830)>;
+include "V810Subtargets.td"
 
 // split a 32-bit immediate into low and high bits
 def IMM32_LO16 : SDNodeXForm<imm, [{
@@ -449,69 +442,70 @@ let Defs = [R30, SR5], Constraints = "$r2 = $r2_", V810_ZFlag = 1, V810_SFlag = 
     [WriteIDiv]
   >;
 }
-
+let Predicates = [IsV810] in {
 // Float ops
-let Defs = [SR5], V810_ZFlag = 1, V810_SFlag = 1 in {
-  let Constraints = "$r2 = $r2_" in
-  def ADDF_S : FormatVII<0b000100,
-    (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
-    "addf.s $r1, $r2",
-    [(set f32:$r2, (fadd GenRegs:$r2_, GenRegs:$r1))],
-    [WriteFPU]
-  >;
+  let Defs = [SR5], V810_ZFlag = 1, V810_SFlag = 1 in {
+    let Constraints = "$r2 = $r2_" in
+    def ADDF_S : FormatVII<0b000100,
+      (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
+      "addf.s $r1, $r2",
+      [(set f32:$r2, (fadd GenRegs:$r2_, GenRegs:$r1))],
+      [WriteFPU]
+    >;
 
-  let Constraints = "$r2 = $r2_" in
-  def SUBF_S : FormatVII<0b000101,
-    (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
-    "subf.s $r1, $r2",
-    [(set f32:$r2, (fsub GenRegs:$r2_, GenRegs:$r1))],
-    [WriteFPU]
-  >;
+    let Constraints = "$r2 = $r2_" in
+    def SUBF_S : FormatVII<0b000101,
+      (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
+      "subf.s $r1, $r2",
+      [(set f32:$r2, (fsub GenRegs:$r2_, GenRegs:$r1))],
+      [WriteFPU]
+    >;
 
-  let isCompare = 1 in
-  def CMPF_S : FormatVII<0b000000,
-    (outs), (ins GenRegs:$r2, GenRegs:$r1),
-    "cmpf.s $r1, $r2",
-    [(V810FCMP GenRegs:$r2, GenRegs:$r1)],
-    [WriteFPU]
-  >;
+    let isCompare = 1 in
+    def CMPF_S : FormatVII<0b000000,
+      (outs), (ins GenRegs:$r2, GenRegs:$r1),
+      "cmpf.s $r1, $r2",
+      [(V810FCMP GenRegs:$r2, GenRegs:$r1)],
+      [WriteFPU]
+    >;
 
-  let Constraints = "$r2 = $r2_" in
-  def MULF_S : FormatVII<0b000110,
-    (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
-    "mulf.s $r1, $r2",
-    [(set f32:$r2, (fmul GenRegs:$r2_, GenRegs:$r1))],
-    [WriteFPU]
-  >;
+    let Constraints = "$r2 = $r2_" in
+    def MULF_S : FormatVII<0b000110,
+      (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
+      "mulf.s $r1, $r2",
+      [(set f32:$r2, (fmul GenRegs:$r2_, GenRegs:$r1))],
+      [WriteFPU]
+    >;
 
-  let Constraints = "$r2 = $r2_" in
-  def DIVF_S : FormatVII<0b000111,
-    (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
-    "divf.s $r1, $r2",
-    [(set f32:$r2, (fdiv GenRegs:$r2_, GenRegs:$r1))],
-    [WriteFPU]
-  >;
+    let Constraints = "$r2 = $r2_" in
+    def DIVF_S : FormatVII<0b000111,
+      (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
+      "divf.s $r1, $r2",
+      [(set f32:$r2, (fdiv GenRegs:$r2_, GenRegs:$r1))],
+      [WriteFPU]
+    >;
 
-  def CVT_WS : FormatVII<0b000010,
-    (outs GenRegs:$r2), (ins GenRegs:$r1),
-    "cvt.ws $r1, $r2",
-    [(set f32:$r2, (sint_to_fp GenRegs:$r1))],
-    [WriteFPU]
-  >;
+    def CVT_WS : FormatVII<0b000010,
+      (outs GenRegs:$r2), (ins GenRegs:$r1),
+      "cvt.ws $r1, $r2",
+      [(set f32:$r2, (sint_to_fp GenRegs:$r1))],
+      [WriteFPU]
+    >;
 
-  def CVT_SW : FormatVII<0b000011,
-    (outs GenRegs:$r2), (ins GenRegs:$r1),
-    "cvt.sw $r1, $r2",
-    [(set i32:$r2, (fp_to_sint (fround GenRegs:$r1)))],
-    [WriteFPU]
-  >;
+    def CVT_SW : FormatVII<0b000011,
+      (outs GenRegs:$r2), (ins GenRegs:$r1),
+      "cvt.sw $r1, $r2",
+      [(set i32:$r2, (fp_to_sint (fround GenRegs:$r1)))],
+      [WriteFPU]
+    >;
 
-  def TRNC_SW : FormatVII<0b001011,
-    (outs GenRegs:$r2), (ins GenRegs:$r1),
-    "trnc.sw $r1, $r2",
-    [(set i32:$r2, (fp_to_sint GenRegs:$r1))],
-    [WriteFPU]
-  >;
+    def TRNC_SW : FormatVII<0b001011,
+      (outs GenRegs:$r2), (ins GenRegs:$r1),
+      "trnc.sw $r1, $r2",
+      [(set i32:$r2, (fp_to_sint GenRegs:$r1))],
+      [WriteFPU]
+    >;
+  }
 }
 
 let Uses = [SR5], usesCustomInserter = 1 in {
@@ -788,6 +782,97 @@ let Predicates = [IsNintendo] in {
 
   def : Pat<(i32 (bswap GenRegs:$r2)),
             (XB (XH (XB GenRegs:$r2)))>;
+
+}
+
+// V830 instructions
+let Predicates = [IsV830] in {
+
+  def MULI : FormatV<0b110010,
+    (outs GenRegs:$r2), (ins GenRegs:$r1, simm16Op:$imm),
+    "muli $imm, $r1, $r2",
+    [(set i32:$r2, (smulfixsat GenRegs:$r1, simm16:$imm, 0))],
+    [WriteIMul]
+  >;
+
+  def MACI : FormatV<0b110110,
+    (outs GenRegs:$r2), (ins GenRegs:$r1, simm16Op:$imm),
+    "maci $imm, $r1, $r2",
+    [(set i32:$r2, (smulfixsat GenRegs:$r1, simm16:$imm, 0))], //Placeholder
+    [WriteIMul]
+  >;
+
+  def SATADD3 : FormatVIII<0b010000,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "satadd3 $r1, $r2, $r3",
+    [(set i32:$r3, (saddsat GenRegs:$r1, GenRegs:$r2))],
+    [WriteALU]
+  >;
+
+  def SATSUB3 : FormatVIII<0b010001,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "satsub3 $r1, $r2, $r3",
+    [(set i32:$r3, (ssubsat GenRegs:$r2, GenRegs:$r1))],
+    [WriteALU]
+  >;
+
+  def MIN3 : FormatVIII<0b010010,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "min3 $r1, $r2, $r3",
+    [(set i32:$r3, (smin GenRegs:$r2, GenRegs:$r1))],
+    [WriteALU]
+  >;
+
+  def MAX3 : FormatVIII<0b010011,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "max3 $r1, $r2, $r3",
+    [(set i32:$r3, (smax GenRegs:$r2, GenRegs:$r1))],
+    [WriteALU]
+  >;
+
+  let Constraints = "$r3 = $r3_" in 
+  def SHLD3 : FormatVIII<0b011000,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2, GenRegs:$r3_),
+    "shld3 $r1, $r2, $r3",
+    [(set i32:$r3, (fshl GenRegs:$r3_, GenRegs:$r2, GenRegs:$r1))],
+    [WriteALU]
+  >;
+
+  let Constraints = "$r3 = $r3_" in 
+  def SHRD3 : FormatVIII<0b011001,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2, GenRegs:$r3_),
+    "shrd3 $r1, $r2, $r3",
+    [(set i32:$r3, (fshr GenRegs:$r3_, GenRegs:$r2, GenRegs:$r1))],
+    [WriteALU]
+  >;
+
+  def MACT3 : FormatVIII<0b011100,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "mact3 $r1, $r2, $r3",
+    [(set i32:$r3, (mulhs GenRegs:$r2, GenRegs:$r1))], //Placeholder
+    [WriteIMul]
+  >;
+
+  def MULT3 : FormatVIII<0b011110,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "mult3 $r1, $r2, $r3",
+    [(set i32:$r3, (mulhs GenRegs:$r2, GenRegs:$r1))],
+    [WriteIMul]
+  >;
+
+  def MUL3 : FormatVIII<0b011111,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "mul3 $r1, $r2, $r3",
+    [(set i32:$r3, (smulfixsat GenRegs:$r2, GenRegs:$r1, 0))],
+    [WriteIMul]
+  >;
+
+  def MAC3 : FormatVIII<0b011101,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "mac3 $r1, $r2, $r3",
+    [(set i32:$r3, (smulfixsat GenRegs:$r2, GenRegs:$r1, 0))], //Placeholder
+    [WriteIMul]
+  >;
 
 }
 

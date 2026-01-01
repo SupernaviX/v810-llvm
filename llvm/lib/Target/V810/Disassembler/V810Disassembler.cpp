@@ -57,7 +57,7 @@ static const unsigned SysRegDecoderTable[] = {
   V810::SR4,  V810::SR5,  V810::SR6,  V810::SR7,
   0,          0,          0,          0,
   0,          0,          0,          0,
-  0,          0,          0,          0,
+  V810::SR16, V810::SR17, 0,          0,
   0,          0,          0,          0,
   V810::SR24, V810::SR25, 0,          0,
   0,          V810::SR29, V810::SR30, V810::SR31 };

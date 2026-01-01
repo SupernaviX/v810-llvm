@@ -336,6 +336,9 @@ const MCSchedModel &MCSubtargetInfo::getSchedModelForCPU(StringRef CPU) const {
   assert(llvm::is_sorted(ProcDesc) &&
          "Processor machine model table is not sorted");
 
+  if (CPU.empty())
+    return MCSchedModel::Default;
+
   // Find entry
   const SubtargetSubTypeKV *CPUEntry = Find(CPU, ProcDesc);
 

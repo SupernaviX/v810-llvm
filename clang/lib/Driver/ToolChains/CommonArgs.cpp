@@ -95,6 +95,7 @@ static bool useFramePointerForTargetByDefault(const llvm::opt::ArgList &Args,
   case llvm::Triple::sparcel:
   case llvm::Triple::sparcv9:
   case llvm::Triple::v810:
+  case llvm::Triple::v830:
   case llvm::Triple::amdgcn:
   case llvm::Triple::r600:
   case llvm::Triple::csky:
@@ -639,6 +640,8 @@ const char *tools::getLDMOption(const llvm::Triple &T, const ArgList &Args) {
     return "elf_x86_64";
   case llvm::Triple::v810:
     return "elf32_v810";
+  case llvm::Triple::v830:
+    return "elf32_v830";
   case llvm::Triple::ve:
     return "elf64ve";
   case llvm::Triple::csky:
@@ -803,6 +806,7 @@ std::string tools::getCPUName(const Driver &D, const ArgList &Args,
     return sparc::getSparcTargetCPU(D, Args, T);
 
   case llvm::Triple::v810:
+  case llvm::Triple::v830:
     return v810::getV810TargetCPU(D, Args, T);
 
   case llvm::Triple::x86:
@@ -914,6 +918,7 @@ void tools::getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     msp430::getMSP430TargetFeatures(D, Args, Features);
     break;
   case llvm::Triple::v810:
+  case llvm::Triple::v830:
     v810::getV810TargetFeatures(D, Args, Features);
     break;
   case llvm::Triple::ve:

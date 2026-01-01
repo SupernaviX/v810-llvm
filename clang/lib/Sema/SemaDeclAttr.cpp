@@ -6253,6 +6253,7 @@ static void handleInterruptAttr(Sema &S, Decl *D, const ParsedAttr &AL) {
     S.RISCV().handleInterruptAttr(D, AL);
     break;
   case llvm::Triple::v810:
+  case llvm::Triple::v830:
     S.V810().handleInterruptAttr(D, AL);
     break;
   default:

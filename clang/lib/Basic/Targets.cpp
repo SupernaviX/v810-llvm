@@ -697,7 +697,8 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
       return std::make_unique<SPIRV64IntelTargetInfo>(Triple, Opts);
     return std::make_unique<SPIRV64TargetInfo>(Triple, Opts);
   }
-  case llvm::Triple::v810: {
+  case llvm::Triple::v810:
+  case llvm::Triple::v830: {
     return std::make_unique<V810TargetInfo>(Triple, Opts);
   }
   case llvm::Triple::wasm32:

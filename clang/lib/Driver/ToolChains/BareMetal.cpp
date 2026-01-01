@@ -52,7 +52,7 @@ static bool isPPCBareMetal(const llvm::Triple &Triple) {
 }
 
 static bool isV810BareMetal(const llvm::Triple &Triple) {
-  return Triple.isV810();
+  return Triple.isNEC();
 }
 
 static bool findRISCVMultilibs(const Driver &D,
@@ -627,7 +627,7 @@ void baremetal::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   bool NeedCRTs =
-      !Triple.isV810() && !Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles);
+      !Triple.isNEC() && !Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles);
 
   const char *CRTBegin, *CRTEnd;
   if (NeedCRTs) {

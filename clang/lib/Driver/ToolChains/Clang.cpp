@@ -7402,7 +7402,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.addOptOutFlag(CmdArgs, options::OPT_fgnu_inline_asm,
                      options::OPT_fno_gnu_inline_asm);
 
-  if (!Triple.isV810()) {
+  if (!Triple.isNEC()) {
     handleVectorizeLoopsArgs(Args, CmdArgs);
     handleVectorizeSLPArgs(Args, CmdArgs);
   }

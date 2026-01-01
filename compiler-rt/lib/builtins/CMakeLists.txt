@@ -887,6 +887,12 @@ set(v810_SOURCES
   ${GENERIC_SOURCES}
 )
 
+set(v830_SOURCES
+  v810/__memcpy_wordaligned.S
+  ${GENERIC_TF_SOURCES}
+  ${GENERIC_SOURCES}
+)
+
 set(m68k_SOURCES ${GENERIC_SOURCES})
 
 add_custom_target(builtins)

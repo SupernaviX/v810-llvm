@@ -79,11 +79,11 @@ static MCInstPrinter *createV810MCInstPrinter(const Triple &T,
 }
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeV810TargetMC() {
-  // Register the MC asm info.
-  RegisterMCAsmInfoFn X(getTheV810Target(), createV810MCAsmInfo);
-
   for (Target *T :
        {&getTheV810Target(), &getTheV830Target()}) {
+    // Register the MC asm info.
+    TargetRegistry::RegisterMCAsmInfo(*T, createV810MCAsmInfo);
+
     // Register the MC instruction info.
     TargetRegistry::RegisterMCInstrInfo(*T, createV810MCInstrInfo);
 

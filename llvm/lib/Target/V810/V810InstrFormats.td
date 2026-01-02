@@ -56,7 +56,7 @@ class FormatII<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern, 
 }
 
 // conditional branch
-class FormatIII<bits<3> op, dag outs, dag ins, string asmstr, list<dag> pattern, list<SchedReadWrite> schedrw>
+class FormatIII<bits<1> subop, dag outs, dag ins, string asmstr, list<dag> pattern, list<SchedReadWrite> schedrw>
     : InstV810<outs, ins, asmstr, pattern>,
       Sched<schedrw> {
   field bits<16> Inst;
@@ -65,12 +65,14 @@ class FormatIII<bits<3> op, dag outs, dag ins, string asmstr, list<dag> pattern,
   // Prefer 16-bit instructions by increasing the match priority.
   let AddedComplexity = 1;
 
+  bits<3> op = 0b100;
   bits<4> cond;
   bits<9> disp;
 
   let Inst{15-13} = op;
   let Inst{12-9} = cond;
   let Inst{8-0} = disp;
+  let Inst{0} = subop;
 }
 
 // middle-distance jump

@@ -527,7 +527,7 @@ let Uses = [SR5], usesCustomInserter = 1 in {
 // flags that BCond/SETF read, and idk how to express that dependency in tablegen.
 let Uses = [SR5] in {
   let isTerminator = 1, isBranch = 1 in
-  def Bcond : FormatIII<0b100,
+  def Bcond : FormatIII<0b0,
     (outs), (ins condcode:$cond, bcondtarget:$disp),
     "b$cond $disp",
     [(V810Bcond imm:$cond, bb:$disp)],
@@ -787,6 +787,16 @@ let Predicates = [IsNintendo] in {
 
 // V830 instructions
 let Predicates = [IsV830] in {
+
+  let Uses = [SR5] in {
+  let isTerminator = 1, isBranch = 1 in
+  def ABcond : FormatIII<0b1,
+    (outs), (ins condcode:$cond, bcondtarget:$disp),
+    "ab$cond $disp",
+    [(V810Bcond imm:$cond, bb:$disp)],
+    [WriteBranch]
+  >;
+  }
 
   def MULI : FormatV<0b110010,
     (outs GenRegs:$r2), (ins GenRegs:$r1, simm16Op:$imm),

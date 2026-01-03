@@ -751,7 +751,7 @@ def CAXI : FormatVI<0b111010,
   [WriteLoad, WriteStore]
 >;
 
-let Predicates = [IsNintendo, IsV830] in {
+let Predicates = [IsV830orNintendo] in {
   let Defs = [SR5], r2 = 0, imm = 0 in {
     def CLI : FormatII<0b010110,
       (outs), (ins),

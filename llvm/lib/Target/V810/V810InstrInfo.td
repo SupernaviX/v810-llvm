@@ -668,6 +668,25 @@ let r2 = 0, imm = 0 in {
   >;
 }
 
+let Predicates = [IsV830] in {
+  let r2 = 0, imm = 1 in {
+    def STBY : FormatII<0b011010,
+      (outs), (ins),
+      "stby",
+      [],
+      [WriteBranch]
+    >;
+    let isReturn = 1, isTerminator = 1, isBarrier = 1 in 
+    def BRKRET : FormatII<0b011001,
+      (outs), (ins),
+      "brkret",
+      [(retiglue)],
+      [WriteBranch]
+    >;
+  }
+
+}
+
 let isBarrier = 1, isTerminator = 1, r2 = 0 in
 def TRAP : FormatII<0b011000,
   (outs), (ins uimm5Op:$imm),
@@ -732,8 +751,7 @@ def CAXI : FormatVI<0b111010,
   [WriteLoad, WriteStore]
 >;
 
-// VB-specific instructions
-let Predicates = [IsNintendo] in {
+let Predicates = [IsNintendo, IsV830] in {
   let Defs = [SR5], r2 = 0, imm = 0 in {
     def CLI : FormatII<0b010110,
       (outs), (ins),
@@ -748,6 +766,10 @@ let Predicates = [IsNintendo] in {
       [WriteI]
     >;
   }
+}
+
+// VB-specific instructions
+let Predicates = [IsNintendo] in {
 
   let Constraints = "$r2 = $r2_" in
   def MPYHW : FormatVII<0b001100,
@@ -805,11 +827,40 @@ let Predicates = [IsV830] in {
     [WriteIMul]
   >;
 
+  let Constraints = "$r2 = $r2_" in 
   def MACI : FormatV<0b110110,
-    (outs GenRegs:$r2), (ins GenRegs:$r1, simm16Op:$imm),
+    (outs GenRegs:$r2), (ins GenRegs:$r1, GenRegs:$r2_, simm16Op:$imm),
     "maci $imm, $r1, $r2",
-    [(set i32:$r2, (smulfixsat GenRegs:$r1, simm16:$imm, 0))], //Placeholder
+    [(set i32:$r2, (saddsat GenRegs:$r2_, (smulfix GenRegs:$r1, simm16:$imm, 0)))], 
     [WriteIMul]
+  >;
+
+  def BILD : FormatVII<0b100000,
+    (outs), (ins GenRegs:$r2, GenRegs:$r1),
+    "bild $r1, $r2",
+    [],
+    [WriteLoad, WriteStore]
+  >;
+
+  def BDLD : FormatVII<0b100001,
+    (outs), (ins GenRegs:$r2, GenRegs:$r1),
+    "bdld $r1, $r2",
+    [],
+    [WriteLoad, WriteStore]
+  >;
+
+  def BIST : FormatVII<0b100010,
+    (outs), (ins GenRegs:$r1, GenRegs:$r2),
+    "bist $r2, $r1",
+    [],
+    [WriteLoad, WriteStore]
+  >;
+
+  def BDST : FormatVII<0b100011,
+    (outs), (ins GenRegs:$r1, GenRegs:$r2),
+    "bdst $r2, $r1",
+    [],
+    [WriteLoad, WriteStore]
   >;
 
   def SATADD3 : FormatVIII<0b010000,
@@ -856,10 +907,19 @@ let Predicates = [IsV830] in {
     [WriteALU]
   >;
 
+  let Constraints = "$r3 = $r3_" in 
   def MACT3 : FormatVIII<0b011100,
-    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2, GenRegs:$r3_),
     "mact3 $r1, $r2, $r3",
-    [(set i32:$r3, (mulhs GenRegs:$r2, GenRegs:$r1))], //Placeholder
+    [(set i32:$r3, (saddsat GenRegs:$r3_, (mulhs GenRegs:$r2, GenRegs:$r1)))],
+    [WriteIMul]
+  >;
+
+  let Constraints = "$r3 = $r3_" in 
+  def MAC3 : FormatVIII<0b011101,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2, GenRegs:$r3_),
+    "mac3 $r1, $r2, $r3",
+    [(set i32:$r3, (saddsat GenRegs:$r3_, (smulfix GenRegs:$r2, GenRegs:$r1, 0)))], 
     [WriteIMul]
   >;
 
@@ -874,13 +934,6 @@ let Predicates = [IsV830] in {
     (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
     "mul3 $r1, $r2, $r3",
     [(set i32:$r3, (smulfixsat GenRegs:$r2, GenRegs:$r1, 0))],
-    [WriteIMul]
-  >;
-
-  def MAC3 : FormatVIII<0b011101,
-    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
-    "mac3 $r1, $r2, $r3",
-    [(set i32:$r3, (smulfixsat GenRegs:$r2, GenRegs:$r1, 0))], //Placeholder
     [WriteIMul]
   >;
 

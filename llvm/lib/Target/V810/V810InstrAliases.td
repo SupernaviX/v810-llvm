@@ -42,3 +42,12 @@ def : InstAlias<"nop",
 def : InstAlias<"setff $r2",
                 (SETF GenRegs:$r2, 0b1101),
                 0>;
+// Interrupt control aliases
+let Predicates = [IsV830] in {
+  // CLI is EI
+  def : InstAlias<"ei",
+                  (CLI)>;
+  // SEI is DI
+  def : InstAlias<"di",
+                  (SEI)>;
+  }

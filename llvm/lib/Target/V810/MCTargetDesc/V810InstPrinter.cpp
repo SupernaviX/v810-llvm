@@ -21,38 +21,38 @@ void V810InstPrinter::printRegName(raw_ostream &OS, MCRegister Reg) {
 void V810InstPrinter::printInst(const MCInst *MI, uint64_t Address,
                                 StringRef Annot, const MCSubtargetInfo &STI,
                                 raw_ostream &O) {
-  if (!printAliasInstr(MI, Address, O)) {
+  if (!printAliasInstr(MI, Address, STI, O)) {
     if (MI->getOpcode() == V810::Bcond)
-      printBcondInstruction(MI, Address, O);
+      printBcondInstruction(MI, Address, STI, O);
     else if (MI->getOpcode() == V810::JMP)
-      printJmpInstruction(MI, Address, O);
+      printJmpInstruction(MI, Address, STI, O);
     else
-      printInstruction(MI, Address, O);
+      printInstruction(MI, Address, STI, O);
   }
   printAnnotation(O, Annot);
 }
 
 void V810InstPrinter::printBcondInstruction(const MCInst *MI, uint64_t Address,
-                                            raw_ostream &O) {
+                                            const MCSubtargetInfo &STI, raw_ostream &O) {
   assert(MI->getNumOperands() == 2);
   int64_t cond = MI->getOperand(0).getImm();
 
   if (cond == V810CC::CC_NOP) {
     O << "\tnop";
   } else {
-    printInstruction(MI, Address, O);
+    printInstruction(MI, Address, STI, O);
   }
 }
 
 void V810InstPrinter::printJmpInstruction(const MCInst *MI, uint64_t Address,
-                                          raw_ostream &O) {
+                                          const MCSubtargetInfo &STI, raw_ostream &O) {
   O <<"\tjmp [";
-  printOperand(MI, 0, O);
+  printOperand(MI, 0, STI, O);
   O << "]";
 }
 
 void V810InstPrinter::printOperand(const MCInst *MI, int opNum,
-                                   raw_ostream &O) {
+                                   const MCSubtargetInfo &STI, raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(opNum);
 
   if (MO.isReg()) {
@@ -75,7 +75,7 @@ void V810InstPrinter::printOperand(const MCInst *MI, int opNum,
 
 template <unsigned N>
 void V810InstPrinter::printBranchOperand(const MCInst *MI, uint64_t Address,
-                                         unsigned opNum, raw_ostream &O) {
+                                         unsigned opNum, const MCSubtargetInfo &STI, raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(opNum);
   if (MO.isImm()) {
     int64_t Val = SignExtend64<N>(MO.getImm());
@@ -95,22 +95,22 @@ void V810InstPrinter::printBranchOperand(const MCInst *MI, uint64_t Address,
 }
 
 void V810InstPrinter::printMemOperand(const MCInst *MI, int opNum,
-                                      raw_ostream &O) {
+                                      const MCSubtargetInfo &STI, raw_ostream &O) {
   if (MI->getOpcode() == V810::ADDImem) {
     // This is compiled to an ADDI, print it like "$imm, $r1"
-    printOperand(MI, opNum + 1, O);
+    printOperand(MI, opNum + 1, STI, O);
     O << ", ";
-    printOperand(MI, opNum, O);
+    printOperand(MI, opNum, STI, O);
   } else {
-    printOperand(MI, opNum + 1, O);
+    printOperand(MI, opNum + 1, STI, O);
     O << "[";
-    printOperand(MI, opNum, O);
+    printOperand(MI, opNum, STI, O);
     O << "]";
   }
 }
 
 void V810InstPrinter::printCondOperand(const MCInst *MI, int opNum,
-                                       raw_ostream &O) {
+                                       const MCSubtargetInfo &STI, raw_ostream &O) {
   V810CC::CondCodes Cond = (V810CC::CondCodes)MI->getOperand(opNum).getImm();
   if (Cond & (~0x0f)) {
     O << "<invalid>";

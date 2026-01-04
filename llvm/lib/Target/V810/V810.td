@@ -37,6 +37,7 @@ def : Proc<"vb", [FeatureNintendo]>;
 
 def V810AsmWriter : AsmWriter {
   string AsmWriterClassName  = "InstPrinter";
+  int PassSubtarget = 1;
 }
 
 def V810 : Target {

@@ -888,7 +888,7 @@ set(v810_SOURCES
 )
 
 set(v830_SOURCES
-  v810/__memcpy_wordaligned.S
+  v810/v830/__memcpy_wordaligned.S
   ${GENERIC_TF_SOURCES}
   ${GENERIC_SOURCES}
 )

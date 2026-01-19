@@ -328,6 +328,29 @@ ParseStatus V810AsmParser::tryParseRegister(MCRegister &RegNo,
     Parser.Lex();
     return ParseStatus::Success;
   }
+
+  // Accept aliases to register names
+  const MCSymbol *Sym = getContext().lookupSymbol(Tok.getString());
+  if (!Sym)
+    return ParseStatus::NoMatch;
+  for (auto I = 0; I < 32; ++I) {
+    RegName = Sym->getName().lower();
+    RegNo = MatchRegisterName(RegName);
+    if (RegNo) {
+      Parser.Lex(); // eat the identifier
+      return ParseStatus::Success;
+    }
+    RegNo = MatchRegisterAltName(RegName);
+    if (RegNo) {
+      Parser.Lex();
+      return ParseStatus::Success;
+    }
+    const MCExpr *Value = Sym->getVariableValue();
+    if (auto SymbolExpr = dyn_cast<MCSymbolRefExpr>(Value))
+      Sym = &SymbolExpr->getSymbol();
+    else
+      break;
+  }
   return ParseStatus::NoMatch;
 }
 

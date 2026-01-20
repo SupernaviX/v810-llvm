@@ -462,7 +462,7 @@ V810AsmParser::parseJumpTargetOperand(OperandVector &Operands, V810MCExpr::Varia
     return ParseStatus::Failure;
 
   int64_t Value;
-  if (DispValue->evaluateAsAbsolute(Value)) {
+  if (DispValue->evaluateAsAbsolute(Value, getStreamer().getAssemblerPtr())) {
     Operands.push_back(V810Operand::CreateImm(DispValue, S, E));
   } else {
     const V810MCExpr *DispExpr = V810MCExpr::create(Kind, DispValue, getContext());
@@ -644,7 +644,7 @@ bool V810AsmParser::parseImm16Expression(const MCExpr *&Res, SMLoc &EndLoc) {
   
   // Try constant folding hi and lo
   int64_t Value;
-  if (Res->evaluateAsAbsolute(Value)) {
+  if (Res->evaluateAsAbsolute(Value, getStreamer().getAssemblerPtr())) {
     if (evalPseudoOp(Kind, Value)) {
       Res = MCConstantExpr::create(Value, getContext());
       return false;

@@ -345,6 +345,7 @@ ParseStatus V810AsmParser::tryParseRegister(MCRegister &RegNo,
       Parser.Lex();
       return ParseStatus::Success;
     }
+    if (!Sym->isVariable()) break;
     const MCExpr *Value = Sym->getVariableValue();
     if (auto SymbolExpr = dyn_cast<MCSymbolRefExpr>(Value))
       Sym = &SymbolExpr->getSymbol();

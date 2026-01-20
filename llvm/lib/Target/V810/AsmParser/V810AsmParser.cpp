@@ -51,7 +51,7 @@ class V810AsmParser : public MCTargetAsmParser {
   ParseStatus parseOperand(OperandVector &Operands, StringRef Name);
   ParseStatus parseV810AsmOperand(std::unique_ptr<V810Operand> &Operand);
 
-  bool parseImm16Expression(const MCExpr *&Res, SMLoc &EndLoc);
+  bool parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) override;
 
 public:
   V810AsmParser(const MCSubtargetInfo &sti, MCAsmParser &parser,
@@ -421,7 +421,7 @@ V810AsmParser::parseMEMOperand(OperandVector &Operands) {
   if (getLexer().is(AsmToken::LBrac)) {
     EVal = MCConstantExpr::create(0, getContext());
   } else {
-    if (parseImm16Expression(EVal, E))
+    if (getParser().parseExpression(EVal, E))
       return ParseStatus::Failure;
   }
   getLexer().Lex(); // eat the [
@@ -601,7 +601,7 @@ V810AsmParser::parseV810AsmOperand(std::unique_ptr<V810Operand> &Op) {
       break;
     }
 
-    if (parseImm16Expression(EVal, End))
+    if (getParser().parseExpression(EVal, End))
       break;
 
     Op = V810Operand::CreateImm(EVal, Start, End);
@@ -623,10 +623,10 @@ static bool evalPseudoOp(V810MCExpr::VariantKind Kind, int64_t &Value) {
   }
 }
 
-bool V810AsmParser::parseImm16Expression(const MCExpr *&Res, SMLoc &EndLoc) {
+bool V810AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   SMLoc StartLoc = getLexer().getLoc();
   if (getTok().isNot(AsmToken::Identifier)) {
-    return getParser().parseExpression(Res, EndLoc);
+    return getParser().parsePrimaryExpr(Res, EndLoc, nullptr);
   }
   auto Kind = StringSwitch<V810MCExpr::VariantKind>(getTok().getString())
                   .Case("lo", V810MCExpr::VK_V810_LO)
@@ -634,7 +634,7 @@ bool V810AsmParser::parseImm16Expression(const MCExpr *&Res, SMLoc &EndLoc) {
                   .Case("sdaoff", V810MCExpr::VK_V810_SDAOFF)
                   .Default(V810MCExpr::VK_V810_None);
   if (Kind == V810MCExpr::VK_V810_None)
-    return getParser().parseExpression(Res, EndLoc);
+    return getParser().parsePrimaryExpr(Res, EndLoc);
 
   Lex();
   if (getTok().isNot(AsmToken::LParen))

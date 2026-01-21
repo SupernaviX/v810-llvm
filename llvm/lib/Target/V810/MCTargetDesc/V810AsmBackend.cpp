@@ -125,15 +125,16 @@ namespace {
 
     bool writeNopData(raw_ostream &OS, uint64_t Count,
                       const MCSubtargetInfo *STI) const override {
-      // Cannot emit NOP with size not multiple of 16 bits.
-      if (Count % 2 != 0) {
-        return false;
-      }
-
       uint64_t NumNops = Count / 2;
       for (uint64_t i = 0; i != NumNops; ++i) {
         // all 0s is MOV r0 r0, which takes one cycle and does nothing
         support::endian::write<uint16_t>(OS, 0x0000, endianness::little);
+      }
+      if (Count % 2 != 0) {
+        // Fill in one byte.
+        // Whatever we're padding is definitely not an instruction,
+        // so 0s is fine.
+        support::endian::write<uint8_t>(OS, 0x00, endianness::little);
       }
       return true;
     }

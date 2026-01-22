@@ -360,6 +360,10 @@ bool V810AsmParser::parseInstruction(ParseInstructionInfo &Info,
                                      OperandVector &Operands) {
   Operands.push_back(V810Operand::CreateToken(Name, NameLoc));
 
+  while (getLexer().is(AsmToken::Comment)) {
+    getLexer().Lex();
+  }
+
   // If there are no operands, we're done
   if (getLexer().is(AsmToken::EndOfStatement))
     return false;
@@ -370,12 +374,25 @@ bool V810AsmParser::parseInstruction(ParseInstructionInfo &Info,
     return Error(Loc, "unexpected token");
   }
 
+  while (getLexer().is(AsmToken::Comment)) {
+    getLexer().Lex();
+  }
+
   // read other operands
   while (getLexer().is(AsmToken::Comma)) {
     getLexer().Lex();
+
+    while (getLexer().is(AsmToken::Comment)) {
+      getLexer().Lex();
+    }
+
     if (!parseOperand(Operands, Name).isSuccess()) {
       SMLoc Loc = getLexer().getLoc();
       return Error(Loc, "unexpected token");
+    }
+
+    while (getLexer().is(AsmToken::Comment)) {
+      getLexer().Lex();
     }
   }
 
@@ -410,6 +427,8 @@ bool V810AsmParser::parseSSectionDirective(StringRef Section, unsigned Type) {
   return false;
 }
 
+#include <iostream>
+
 // offset[reg]
 // offset is an (optional) expression, reg is a register
 ParseStatus
@@ -420,25 +439,33 @@ V810AsmParser::parseMEMOperand(OperandVector &Operands) {
   // Parse the offset (if it exists)
   const MCExpr *EVal;
   if (getLexer().is(AsmToken::LBrac)) {
+    std::cerr << "no expr found" << std::endl;
     EVal = MCConstantExpr::create(0, getContext());
   } else {
+    std::cerr << "expr found" << std::endl;
     if (getParser().parseExpression(EVal, E))
       return ParseStatus::Failure;
   }
   getLexer().Lex(); // eat the [
 
+  std::cerr << "parse reg" << std::endl;
   // parse the register
   MCRegister Reg;
   if (parseRegister(Reg, S, E))
     return ParseStatus::Failure;
+  std::cerr << "parsed reg" << std::endl;
 
   // eat the ]
   E = getTok().getEndLoc();
+  std::cerr << "on nom nom" << std::endl;
   if (!getLexer().is(AsmToken::RBrac))
     return ParseStatus::Failure;
+  std::cerr << "phew" << std::endl;
   getLexer().Lex();
 
   Operands.push_back(V810Operand::CreateMEMri(Reg, EVal, S, E));
+  Operands.back()->dump();
+  std::cerr << "im a wiener" << std::endl;
 
   return ParseStatus::Success;
 }

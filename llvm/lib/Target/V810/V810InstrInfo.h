@@ -62,7 +62,7 @@ class V810InstrInfo : public V810GenInstrInfo {
   virtual void loadRegFromStackSlot(
               MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
               Register DestReg, int FrameIndex, const TargetRegisterClass *RC,
-              Register VReg,
+              Register VReg, unsigned SubReg = 0,
               MachineInstr::MIFlag Flags = MachineInstr::NoFlags) const override;
 
   MachineBasicBlock *getBranchDestBlock(const MachineInstr &MI) const override;

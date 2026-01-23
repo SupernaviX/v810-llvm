@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -ffreestanding %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-linux-gnu -ffreestanding %s -emit-llvm -o - | FileCheck %s
 
 #include<stdint.h>
 

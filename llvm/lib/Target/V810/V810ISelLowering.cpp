@@ -526,7 +526,7 @@ bool V810TargetLowering::IsEligibleForTailCallOptimization(
   return true;
 }
 
-TargetLowering::AtomicExpansionKind V810TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
+TargetLowering::AtomicExpansionKind V810TargetLowering::shouldExpandAtomicRMWInIR(const AtomicRMWInst *AI) const {
   return AtomicExpansionKind::CmpXChg;
 }
 

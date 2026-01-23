@@ -87,7 +87,7 @@ namespace llvm {
     MachineBasicBlock *
     ExpandSelectCC(MachineInstr &MI, MachineBasicBlock *MBB) const;
 
-    AtomicExpansionKind shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const override;
+    AtomicExpansionKind shouldExpandAtomicRMWInIR(const AtomicRMWInst *AI) const override;
 
     bool IsEligibleForTailCallOptimization(CCState &CCInfo,
                                            CallLoweringInfo &CLI,

@@ -113,3 +113,4 @@ void V810::relocate(uint8_t *loc, const Relocation &rel,
 }
 
 void elf::setV810TargetInfo(Ctx &ctx) { ctx.target.reset(new V810(ctx)); }
+void elf::setV830TargetInfo(Ctx &ctx) { ctx.target.reset(new V810(ctx)); }

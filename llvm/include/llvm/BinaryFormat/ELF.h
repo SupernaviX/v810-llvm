@@ -325,6 +325,7 @@ enum {
   EM_VE = 251,            // NEC SX-Aurora VE
   EM_CSKY = 252,          // C-SKY 32-bit processor
   EM_LOONGARCH = 258,     // LoongArch
+  EM_V830 = 28868,       // NEC v830
   EM_V810 = 36993        // NEC v810
 };
 
@@ -857,7 +858,7 @@ enum : unsigned {
   EF_AMDGPU_MACH_AMDGCN_RESERVED_0X4D   = 0x04d,
   EF_AMDGPU_MACH_AMDGCN_GFX1201         = 0x04e,
   EF_AMDGPU_MACH_AMDGCN_GFX950          = 0x04f,
-  EF_AMDGPU_MACH_AMDGCN_RESERVED_0X50   = 0x050,
+  EF_AMDGPU_MACH_AMDGCN_GFX1310         = 0x050,
   EF_AMDGPU_MACH_AMDGCN_GFX9_GENERIC    = 0x051,
   EF_AMDGPU_MACH_AMDGCN_GFX10_1_GENERIC = 0x052,
   EF_AMDGPU_MACH_AMDGCN_GFX10_3_GENERIC = 0x053,
@@ -1797,6 +1798,7 @@ enum : unsigned {
   NT_ARM_ZA = 0x40c,
   NT_ARM_ZT = 0x40d,
   NT_ARM_FPMR = 0x40e,
+  NT_ARM_POE = 0x40f,
   NT_ARM_GCS = 0x410,
 
   NT_FILE = 0x46494c45,

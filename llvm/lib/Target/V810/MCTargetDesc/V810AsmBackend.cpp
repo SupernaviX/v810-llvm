@@ -55,8 +55,12 @@ namespace {
   class V810AsmBackend : public MCAsmBackend {
   private:
     Triple::OSType OSType;
+    bool IsV830;
   public:
-    V810AsmBackend(Triple::OSType OSType) : MCAsmBackend(endianness::little), OSType(OSType) {}
+    V810AsmBackend(const MCSubtargetInfo &STI, Triple::OSType OSType)
+      : MCAsmBackend(endianness::little),
+        OSType(OSType),
+        IsV830(STI.getTargetTriple().isV830()) {}
 
     std::optional<MCFixupKind> getFixupKind(StringRef Name) const override {
       unsigned Type;
@@ -121,15 +125,16 @@ namespace {
 
     bool writeNopData(raw_ostream &OS, uint64_t Count,
                       const MCSubtargetInfo *STI) const override {
-      // Cannot emit NOP with size not multiple of 16 bits.
-      if (Count % 2 != 0) {
-        return false;
-      }
-
       uint64_t NumNops = Count / 2;
       for (uint64_t i = 0; i != NumNops; ++i) {
         // all 0s is MOV r0 r0, which takes one cycle and does nothing
         support::endian::write<uint16_t>(OS, 0x0000, endianness::little);
+      }
+      if (Count % 2 != 0) {
+        // Fill in one byte.
+        // Whatever we're padding is definitely not an instruction,
+        // so 0s is fine.
+        support::endian::write<uint8_t>(OS, 0x00, endianness::little);
       }
       return true;
     }
@@ -137,7 +142,7 @@ namespace {
     std::unique_ptr<MCObjectTargetWriter>
     createObjectTargetWriter() const override {
       uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(OSType);
-      return createV810ObjectWriter(OSABI);
+      return createV810ObjectWriter(IsV830, OSABI);
     }
   };
 
@@ -147,5 +152,5 @@ MCAsmBackend *llvm::createV810AsmBackend(const Target &T,
                                          const MCSubtargetInfo &STI,
                                          const MCRegisterInfo &MRI,
                                          const MCTargetOptions &Options) {
-  return new V810AsmBackend(STI.getTargetTriple().getOS());
+  return new V810AsmBackend(STI, STI.getTargetTriple().getOS());
 }

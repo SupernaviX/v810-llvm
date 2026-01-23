@@ -142,4 +142,5 @@ void V810AsmPrinter::LowerCallIndirect(const MachineInstr *MI) {
 // Force static initialization.
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeV810AsmPrinter() {
   RegisterAsmPrinter<V810AsmPrinter> X(getTheV810Target());
+  RegisterAsmPrinter<V810AsmPrinter> Y(getTheV830Target());
 }

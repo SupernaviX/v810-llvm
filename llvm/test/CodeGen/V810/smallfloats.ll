@@ -4,24 +4,18 @@
 define half @guh(ptr %huh) {
 ; CHECK-LABEL: guh:
 ; CHECK:       # %bb.0:
-; CHECK-NEXT:    add -4, r3
-; CHECK-NEXT:    in.h 0[r6], r6
-; CHECK-NEXT:    st.w r31, 0[r3] # 4-byte Folded Spill
-; CHECK-NEXT:    jal __extendhfsf2
-; CHECK-NEXT:    ld.w 0[r3], r31 # 4-byte Folded Reload
-; CHECK-NEXT:    add 4, r3
+; CHECK-NEXT:    ld.h 0[r6], r10
 ; CHECK-NEXT:    jmp [r31]
     %res = load half, ptr %huh, align 4
     ret half %res
 }
 
-define i16 @convertToF16(float %a) {
-; CHECK-LABEL: convertToF16:
+define i16 @floatToI16(float %a) {
+; CHECK-LABEL: floatToI16:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    add -4, r3
 ; CHECK-NEXT:    st.w r31, 0[r3] # 4-byte Folded Spill
 ; CHECK-NEXT:    jal __truncsfhf2
-; CHECK-NEXT:    andi 65535, r10, r10
 ; CHECK-NEXT:    ld.w 0[r3], r31 # 4-byte Folded Reload
 ; CHECK-NEXT:    add 4, r3
 ; CHECK-NEXT:    jmp [r31]
@@ -29,8 +23,8 @@ define i16 @convertToF16(float %a) {
     ret i16 %res
 }
 
-define float @convertFromF16(i16 %a) {
-; CHECK-LABEL: convertFromF16:
+define float @i16ToFloat(i16 %a) {
+; CHECK-LABEL: i16ToFloat:
 ; CHECK:       # %bb.0:
 ; CHECK-NEXT:    add -4, r3
 ; CHECK-NEXT:    st.w r31, 0[r3] # 4-byte Folded Spill
@@ -39,5 +33,31 @@ define float @convertFromF16(i16 %a) {
 ; CHECK-NEXT:    add 4, r3
 ; CHECK-NEXT:    jmp [r31]
     %res = call float @llvm.convert.from.fp16.f32(i16 %a)
+    ret float %res
+}
+
+define half @floatToHalf(float %a) {
+; CHECK-LABEL: floatToHalf:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    add -4, r3
+; CHECK-NEXT:    st.w r31, 0[r3] # 4-byte Folded Spill
+; CHECK-NEXT:    jal __truncsfhf2
+; CHECK-NEXT:    ld.w 0[r3], r31 # 4-byte Folded Reload
+; CHECK-NEXT:    add 4, r3
+; CHECK-NEXT:    jmp [r31]
+    %res = call half @llvm.convert.to.fp16.f32(float %a)
+    ret half %res
+}
+
+define float @halfToFloat(half %a) {
+; CHECK-LABEL: halfToFloat:
+; CHECK:       # %bb.0:
+; CHECK-NEXT:    add -4, r3
+; CHECK-NEXT:    st.w r31, 0[r3] # 4-byte Folded Spill
+; CHECK-NEXT:    jal __extendhfsf2
+; CHECK-NEXT:    ld.w 0[r3], r31 # 4-byte Folded Reload
+; CHECK-NEXT:    add 4, r3
+; CHECK-NEXT:    jmp [r31]
+    %res = call float @llvm.convert.from.fp16.f32(half %a)
     ret float %res
 }

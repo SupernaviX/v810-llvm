@@ -6,6 +6,7 @@ namespace llvm {
 class Target;
 
 Target &getTheV810Target();
+Target &getTheV830Target();
 
 } // namespace llvm
 

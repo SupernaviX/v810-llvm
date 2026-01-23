@@ -51,7 +51,7 @@ class V810AsmParser : public MCTargetAsmParser {
   ParseStatus parseOperand(OperandVector &Operands, StringRef Name);
   ParseStatus parseV810AsmOperand(std::unique_ptr<V810Operand> &Operand);
 
-  bool parseImm16Expression(const MCExpr *&Res, SMLoc &EndLoc);
+  bool parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) override;
 
 public:
   V810AsmParser(const MCSubtargetInfo &sti, MCAsmParser &parser,
@@ -328,6 +328,30 @@ ParseStatus V810AsmParser::tryParseRegister(MCRegister &RegNo,
     Parser.Lex();
     return ParseStatus::Success;
   }
+
+  // Accept aliases to register names
+  const MCSymbol *Sym = getContext().lookupSymbol(Tok.getString());
+  if (!Sym)
+    return ParseStatus::NoMatch;
+  for (auto I = 0; I < 32; ++I) {
+    RegName = Sym->getName().lower();
+    RegNo = MatchRegisterName(RegName);
+    if (RegNo) {
+      Parser.Lex(); // eat the identifier
+      return ParseStatus::Success;
+    }
+    RegNo = MatchRegisterAltName(RegName);
+    if (RegNo) {
+      Parser.Lex();
+      return ParseStatus::Success;
+    }
+    if (!Sym->isVariable()) break;
+    const MCExpr *Value = Sym->getVariableValue();
+    if (auto SymbolExpr = dyn_cast<MCSymbolRefExpr>(Value))
+      Sym = &SymbolExpr->getSymbol();
+    else
+      break;
+  }
   return ParseStatus::NoMatch;
 }
 
@@ -335,6 +359,10 @@ bool V810AsmParser::parseInstruction(ParseInstructionInfo &Info,
                                      StringRef Name, SMLoc NameLoc,
                                      OperandVector &Operands) {
   Operands.push_back(V810Operand::CreateToken(Name, NameLoc));
+
+  while (getLexer().is(AsmToken::Comment)) {
+    getLexer().Lex();
+  }
 
   // If there are no operands, we're done
   if (getLexer().is(AsmToken::EndOfStatement))
@@ -346,12 +374,25 @@ bool V810AsmParser::parseInstruction(ParseInstructionInfo &Info,
     return Error(Loc, "unexpected token");
   }
 
+  while (getLexer().is(AsmToken::Comment)) {
+    getLexer().Lex();
+  }
+
   // read other operands
   while (getLexer().is(AsmToken::Comma)) {
     getLexer().Lex();
+
+    while (getLexer().is(AsmToken::Comment)) {
+      getLexer().Lex();
+    }
+
     if (!parseOperand(Operands, Name).isSuccess()) {
       SMLoc Loc = getLexer().getLoc();
       return Error(Loc, "unexpected token");
+    }
+
+    while (getLexer().is(AsmToken::Comment)) {
+      getLexer().Lex();
     }
   }
 
@@ -386,6 +427,8 @@ bool V810AsmParser::parseSSectionDirective(StringRef Section, unsigned Type) {
   return false;
 }
 
+#include <iostream>
+
 // offset[reg]
 // offset is an (optional) expression, reg is a register
 ParseStatus
@@ -396,25 +439,33 @@ V810AsmParser::parseMEMOperand(OperandVector &Operands) {
   // Parse the offset (if it exists)
   const MCExpr *EVal;
   if (getLexer().is(AsmToken::LBrac)) {
+    std::cerr << "no expr found" << std::endl;
     EVal = MCConstantExpr::create(0, getContext());
   } else {
-    if (parseImm16Expression(EVal, E))
+    std::cerr << "expr found" << std::endl;
+    if (getParser().parseExpression(EVal, E))
       return ParseStatus::Failure;
   }
   getLexer().Lex(); // eat the [
 
+  std::cerr << "parse reg" << std::endl;
   // parse the register
   MCRegister Reg;
   if (parseRegister(Reg, S, E))
     return ParseStatus::Failure;
+  std::cerr << "parsed reg" << std::endl;
 
   // eat the ]
   E = getTok().getEndLoc();
+  std::cerr << "on nom nom" << std::endl;
   if (!getLexer().is(AsmToken::RBrac))
     return ParseStatus::Failure;
+  std::cerr << "phew" << std::endl;
   getLexer().Lex();
 
   Operands.push_back(V810Operand::CreateMEMri(Reg, EVal, S, E));
+  Operands.back()->dump();
+  std::cerr << "im a wiener" << std::endl;
 
   return ParseStatus::Success;
 }
@@ -439,7 +490,7 @@ V810AsmParser::parseJumpTargetOperand(OperandVector &Operands, V810MCExpr::Varia
     return ParseStatus::Failure;
 
   int64_t Value;
-  if (DispValue->evaluateAsAbsolute(Value)) {
+  if (DispValue->evaluateAsAbsolute(Value, getStreamer().getAssemblerPtr())) {
     Operands.push_back(V810Operand::CreateImm(DispValue, S, E));
   } else {
     const V810MCExpr *DispExpr = V810MCExpr::create(Kind, DispValue, getContext());
@@ -578,7 +629,7 @@ V810AsmParser::parseV810AsmOperand(std::unique_ptr<V810Operand> &Op) {
       break;
     }
 
-    if (parseImm16Expression(EVal, End))
+    if (getParser().parseExpression(EVal, End))
       break;
 
     Op = V810Operand::CreateImm(EVal, Start, End);
@@ -600,10 +651,10 @@ static bool evalPseudoOp(V810MCExpr::VariantKind Kind, int64_t &Value) {
   }
 }
 
-bool V810AsmParser::parseImm16Expression(const MCExpr *&Res, SMLoc &EndLoc) {
+bool V810AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   SMLoc StartLoc = getLexer().getLoc();
   if (getTok().isNot(AsmToken::Identifier)) {
-    return getParser().parseExpression(Res, EndLoc);
+    return getParser().parsePrimaryExpr(Res, EndLoc, nullptr);
   }
   auto Kind = StringSwitch<V810MCExpr::VariantKind>(getTok().getString())
                   .Case("lo", V810MCExpr::VK_V810_LO)
@@ -611,7 +662,7 @@ bool V810AsmParser::parseImm16Expression(const MCExpr *&Res, SMLoc &EndLoc) {
                   .Case("sdaoff", V810MCExpr::VK_V810_SDAOFF)
                   .Default(V810MCExpr::VK_V810_None);
   if (Kind == V810MCExpr::VK_V810_None)
-    return getParser().parseExpression(Res, EndLoc);
+    return getParser().parsePrimaryExpr(Res, EndLoc);
 
   Lex();
   if (getTok().isNot(AsmToken::LParen))
@@ -621,7 +672,7 @@ bool V810AsmParser::parseImm16Expression(const MCExpr *&Res, SMLoc &EndLoc) {
   
   // Try constant folding hi and lo
   int64_t Value;
-  if (Res->evaluateAsAbsolute(Value)) {
+  if (Res->evaluateAsAbsolute(Value, getStreamer().getAssemblerPtr())) {
     if (evalPseudoOp(Kind, Value)) {
       Res = MCConstantExpr::create(Value, getContext());
       return false;
@@ -634,6 +685,7 @@ bool V810AsmParser::parseImm16Expression(const MCExpr *&Res, SMLoc &EndLoc) {
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeV810AsmParser() {
   RegisterMCAsmParser<V810AsmParser> X(getTheV810Target());
+  RegisterMCAsmParser<V810AsmParser> Y(getTheV830Target());
 }
 
 #define GET_REGISTER_MATCHER

@@ -8,8 +8,8 @@ using namespace llvm;
 namespace {
   class V810ObjectWriter : public MCELFObjectTargetWriter {
   public:
-    V810ObjectWriter(uint8_t OSABI)
-      : MCELFObjectTargetWriter(false, OSABI, ELF::EM_V810, true) {}
+    V810ObjectWriter(bool isV830, uint8_t OSABI)
+      : MCELFObjectTargetWriter(false, OSABI, isV830 ? ELF::EM_V830 : ELF::EM_V810, true) {}
     ~V810ObjectWriter() override = default;
   protected:
     unsigned getRelocType(const MCFixup &Fixup, const MCValue &Target,
@@ -54,6 +54,6 @@ unsigned V810ObjectWriter::getRelocType(const MCFixup &Fixup,
 }
 
 std::unique_ptr<MCObjectTargetWriter>
-llvm::createV810ObjectWriter(uint8_t OSABI) {
-  return std::make_unique<V810ObjectWriter>(OSABI);
+llvm::createV810ObjectWriter(bool isV830, uint8_t OSABI) {
+  return std::make_unique<V810ObjectWriter>(isV830, OSABI);
 }

@@ -13,6 +13,7 @@ using namespace llvm;
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeV810Target() {
   // Register the target.
   RegisterTargetMachine<V810TargetMachine> X(getTheV810Target());
+  RegisterTargetMachine<V810TargetMachine> Y(getTheV830Target());
 }
 
 static std::string computeDataLayout(const Triple &T) {

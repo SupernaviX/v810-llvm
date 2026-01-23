@@ -39,7 +39,7 @@ V810TargetLowering::V810TargetLowering(const TargetMachine &TM,
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, &V810::GenRegsRegClass);
-  addRegisterClass(MVT::f32, &V810::GenRegsRegClass);
+  if (!Subtarget->isV830())  addRegisterClass(MVT::f32, &V810::GenRegsRegClass);
 
   // Handle addresses specially to make constants
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
@@ -526,7 +526,7 @@ bool V810TargetLowering::IsEligibleForTailCallOptimization(
   return true;
 }
 
-TargetLowering::AtomicExpansionKind V810TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
+TargetLowering::AtomicExpansionKind V810TargetLowering::shouldExpandAtomicRMWInIR(const AtomicRMWInst *AI) const {
   return AtomicExpansionKind::CmpXChg;
 }
 

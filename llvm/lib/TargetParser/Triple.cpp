@@ -83,6 +83,7 @@ StringRef Triple::getArchTypeName(ArchType Kind) {
   case thumbeb:        return "thumbeb";
   case ve:             return "ve";
   case v810:           return "v810";
+  case v830:           return "v830";
   case wasm32:         return "wasm32";
   case wasm64:         return "wasm64";
   case x86:            return "i386";
@@ -117,6 +118,8 @@ StringRef Triple::getArchName(ArchType Kind, SubArchType SubArch) {
       return "arm64ec";
     if (SubArch == AArch64SubArch_arm64e)
       return "arm64e";
+    if (SubArch == AArch64SubArch_lfi)
+      return "aarch64_lfi";
     break;
   case Triple::spirv:
     switch (SubArch) {
@@ -327,6 +330,12 @@ StringRef Triple::getOSTypeName(OSType Kind) {
   case TvOS: return "tvos";
   case UEFI: return "uefi";
   case WASI: return "wasi";
+  case WASIp1:
+    return "wasip1";
+  case WASIp2:
+    return "wasip2";
+  case WASIp3:
+    return "wasip3";
   case WatchOS: return "watchos";
   case Win32: return "windows";
   case ZOS: return "zos";
@@ -336,6 +345,8 @@ StringRef Triple::getOSTypeName(OSType Kind) {
   case Vulkan: return "vulkan";
   case CheriotRTOS:
     return "cheriotrtos";
+  case ChipStar:
+    return "chipstar";
   }
 
   llvm_unreachable("Invalid OSType");
@@ -486,6 +497,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
       .Case("thumb", thumb)
       .Case("thumbeb", thumbeb)
       .Case("v810", v810)
+      .Case("v830", v830)
       .Case("x86", x86)
       .Case("i386", x86)
       .Case("x86-64", x86_64)
@@ -598,6 +610,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
           .Case("aarch64", Triple::aarch64)
           .Case("aarch64_be", Triple::aarch64_be)
           .Case("aarch64_32", Triple::aarch64_32)
+          .Case("aarch64_lfi", Triple::aarch64)
           .Case("arc", Triple::arc)
           .Case("arm64", Triple::aarch64)
           .Case("arm64_32", Triple::aarch64_32)
@@ -634,6 +647,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
           .Case("tce", Triple::tce)
           .Case("tcele", Triple::tcele)
           .Case("v810", Triple::v810)
+          .Case("v830", Triple::v830)
           .Case("xcore", Triple::xcore)
           .Case("nvptx", Triple::nvptx)
           .Case("nvptx64", Triple::nvptx64)
@@ -740,6 +754,9 @@ static Triple::OSType parseOS(StringRef OSName) {
       .StartsWith("amdpal", Triple::AMDPAL)
       .StartsWith("hermit", Triple::HermitCore)
       .StartsWith("hurd", Triple::Hurd)
+      .StartsWith("wasip1", Triple::WASIp1)
+      .StartsWith("wasip2", Triple::WASIp2)
+      .StartsWith("wasip3", Triple::WASIp3)
       .StartsWith("wasi", Triple::WASI)
       .StartsWith("emscripten", Triple::Emscripten)
       .StartsWith("shadermodel", Triple::ShaderModel)
@@ -747,6 +764,7 @@ static Triple::OSType parseOS(StringRef OSName) {
       .StartsWith("serenity", Triple::Serenity)
       .StartsWith("vulkan", Triple::Vulkan)
       .StartsWith("cheriotrtos", Triple::CheriotRTOS)
+      .StartsWith("chipstar", Triple::ChipStar)
       .Default(Triple::UnknownOS);
 }
 
@@ -836,6 +854,9 @@ static Triple::SubArchType parseSubArch(StringRef SubArchName) {
 
   if (SubArchName == "arm64ec")
     return Triple::AArch64SubArch_arm64ec;
+
+  if (SubArchName == "aarch64_lfi")
+    return Triple::AArch64SubArch_lfi;
 
   if (SubArchName.starts_with("spirv"))
     return StringSwitch<Triple::SubArchType>(SubArchName)
@@ -1017,6 +1038,7 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
   case Triple::thumbeb:
   case Triple::ve:
   case Triple::v810:
+  case Triple::v830:
   case Triple::xcore:
   case Triple::xtensa:
     return Triple::ELF;
@@ -1742,6 +1764,7 @@ unsigned Triple::getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::thumb:
   case llvm::Triple::thumbeb:
   case llvm::Triple::v810:
+  case llvm::Triple::v830:
   case llvm::Triple::wasm32:
   case llvm::Triple::x86:
   case llvm::Triple::xcore:
@@ -1853,6 +1876,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::thumb:
   case Triple::thumbeb:
   case Triple::v810:
+  case Triple::v830:
   case Triple::wasm32:
   case Triple::x86:
   case Triple::xcore:
@@ -1910,6 +1934,7 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::tce:
   case Triple::tcele:
   case Triple::v810:
+  case Triple::v830:
   case Triple::xcore:
   case Triple::xtensa:
     T.setArch(UnknownArch);
@@ -2129,6 +2154,7 @@ bool Triple::isLittleEndian() const {
   case Triple::thumb:
   case Triple::ve:
   case Triple::v810:
+  case Triple::v830:
   case Triple::wasm32:
   case Triple::wasm64:
   case Triple::x86:

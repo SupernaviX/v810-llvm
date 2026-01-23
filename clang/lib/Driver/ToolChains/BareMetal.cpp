@@ -52,7 +52,7 @@ static bool isPPCBareMetal(const llvm::Triple &Triple) {
 }
 
 static bool isV810BareMetal(const llvm::Triple &Triple) {
-  return Triple.isV810();
+  return Triple.isNEC();
 }
 
 static bool findRISCVMultilibs(const Driver &D,
@@ -412,6 +412,8 @@ void BareMetal::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   if (DriverArgs.hasArg(options::OPT_nostdlibinc))
     return;
 
+  const Driver &D = getDriver();
+
   if (std::optional<std::string> Path = getStdlibIncludePath())
     addSystemInclude(DriverArgs, CC1Args, *Path);
 
@@ -420,6 +422,12 @@ void BareMetal::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     for (const Multilib &M : getOrderedMultilibs()) {
       SmallString<128> Dir(SysRootDir);
       llvm::sys::path::append(Dir, M.includeSuffix());
+      llvm::sys::path::append(Dir, "include");
+      addSystemInclude(DriverArgs, CC1Args, Dir.str());
+    }
+    SmallString<128> Dir(SysRootDir);
+    llvm::sys::path::append(Dir, getTripleString());
+    if (D.getVFS().exists(Dir)) {
       llvm::sys::path::append(Dir, "include");
       addSystemInclude(DriverArgs, CC1Args, Dir.str());
     }
@@ -502,7 +510,7 @@ void BareMetal::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
         addSystemInclude(DriverArgs, CC1Args, TargetDir.str());
         break;
       }
-      // Add generic path if nothing else succeeded so far.
+      // Add generic paths if nothing else succeeded so far.
       llvm::sys::path::append(Dir, "include", "c++", "v1");
       addSystemInclude(DriverArgs, CC1Args, Dir.str());
       break;
@@ -531,6 +539,17 @@ void BareMetal::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
       break;
     }
     }
+  }
+  switch (GetCXXStdlibType(DriverArgs)) {
+  case ToolChain::CST_Libcxx: {
+    SmallString<128> Dir(SysRootDir);
+    llvm::sys::path::append(Dir, Target, "include", "c++", "v1");
+    if (D.getVFS().exists(Dir))
+      addSystemInclude(DriverArgs, CC1Args, Dir.str());
+    break;
+  }
+  case ToolChain::CST_Libstdcxx:
+    break;
   }
 }
 
@@ -627,7 +646,7 @@ void baremetal::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   }
 
   bool NeedCRTs =
-      !Triple.isV810() && !Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles);
+      !Triple.isNEC() && !Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles);
 
   const char *CRTBegin, *CRTEnd;
   if (NeedCRTs) {

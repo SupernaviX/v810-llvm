@@ -1,7 +1,6 @@
 include "V810InstrFormats.td"
 
-def IsNintendo : Predicate<"Subtarget->isNintendo()">,
-                 AssemblerPredicate<(all_of FeatureNintendo)>;
+include "V810Subtargets.td"
 
 // split a 32-bit immediate into low and high bits
 def IMM32_LO16 : SDNodeXForm<imm, [{
@@ -443,69 +442,70 @@ let Defs = [R30, SR5], Constraints = "$r2 = $r2_", V810_ZFlag = 1, V810_SFlag = 
     [WriteIDiv]
   >;
 }
-
+let Predicates = [IsV810] in {
 // Float ops
-let Defs = [SR5], V810_ZFlag = 1, V810_SFlag = 1 in {
-  let Constraints = "$r2 = $r2_" in
-  def ADDF_S : FormatVII<0b000100,
-    (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
-    "addf.s $r1, $r2",
-    [(set f32:$r2, (fadd GenRegs:$r2_, GenRegs:$r1))],
-    [WriteFPU]
-  >;
+  let Defs = [SR5], V810_ZFlag = 1, V810_SFlag = 1 in {
+    let Constraints = "$r2 = $r2_" in
+    def ADDF_S : FormatVII<0b000100,
+      (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
+      "addf.s $r1, $r2",
+      [(set f32:$r2, (fadd GenRegs:$r2_, GenRegs:$r1))],
+      [WriteFPU]
+    >;
 
-  let Constraints = "$r2 = $r2_" in
-  def SUBF_S : FormatVII<0b000101,
-    (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
-    "subf.s $r1, $r2",
-    [(set f32:$r2, (fsub GenRegs:$r2_, GenRegs:$r1))],
-    [WriteFPU]
-  >;
+    let Constraints = "$r2 = $r2_" in
+    def SUBF_S : FormatVII<0b000101,
+      (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
+      "subf.s $r1, $r2",
+      [(set f32:$r2, (fsub GenRegs:$r2_, GenRegs:$r1))],
+      [WriteFPU]
+    >;
 
-  let isCompare = 1 in
-  def CMPF_S : FormatVII<0b000000,
-    (outs), (ins GenRegs:$r2, GenRegs:$r1),
-    "cmpf.s $r1, $r2",
-    [(V810FCMP GenRegs:$r2, GenRegs:$r1)],
-    [WriteFPU]
-  >;
+    let isCompare = 1 in
+    def CMPF_S : FormatVII<0b000000,
+      (outs), (ins GenRegs:$r2, GenRegs:$r1),
+      "cmpf.s $r1, $r2",
+      [(V810FCMP GenRegs:$r2, GenRegs:$r1)],
+      [WriteFPU]
+    >;
 
-  let Constraints = "$r2 = $r2_" in
-  def MULF_S : FormatVII<0b000110,
-    (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
-    "mulf.s $r1, $r2",
-    [(set f32:$r2, (fmul GenRegs:$r2_, GenRegs:$r1))],
-    [WriteFPU]
-  >;
+    let Constraints = "$r2 = $r2_" in
+    def MULF_S : FormatVII<0b000110,
+      (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
+      "mulf.s $r1, $r2",
+      [(set f32:$r2, (fmul GenRegs:$r2_, GenRegs:$r1))],
+      [WriteFPU]
+    >;
 
-  let Constraints = "$r2 = $r2_" in
-  def DIVF_S : FormatVII<0b000111,
-    (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
-    "divf.s $r1, $r2",
-    [(set f32:$r2, (fdiv GenRegs:$r2_, GenRegs:$r1))],
-    [WriteFPU]
-  >;
+    let Constraints = "$r2 = $r2_" in
+    def DIVF_S : FormatVII<0b000111,
+      (outs GenRegs:$r2), (ins GenRegs:$r2_, GenRegs:$r1),
+      "divf.s $r1, $r2",
+      [(set f32:$r2, (fdiv GenRegs:$r2_, GenRegs:$r1))],
+      [WriteFPU]
+    >;
 
-  def CVT_WS : FormatVII<0b000010,
-    (outs GenRegs:$r2), (ins GenRegs:$r1),
-    "cvt.ws $r1, $r2",
-    [(set f32:$r2, (sint_to_fp GenRegs:$r1))],
-    [WriteFPU]
-  >;
+    def CVT_WS : FormatVII<0b000010,
+      (outs GenRegs:$r2), (ins GenRegs:$r1),
+      "cvt.ws $r1, $r2",
+      [(set f32:$r2, (sint_to_fp GenRegs:$r1))],
+      [WriteFPU]
+    >;
 
-  def CVT_SW : FormatVII<0b000011,
-    (outs GenRegs:$r2), (ins GenRegs:$r1),
-    "cvt.sw $r1, $r2",
-    [(set i32:$r2, (fp_to_sint (fround GenRegs:$r1)))],
-    [WriteFPU]
-  >;
+    def CVT_SW : FormatVII<0b000011,
+      (outs GenRegs:$r2), (ins GenRegs:$r1),
+      "cvt.sw $r1, $r2",
+      [(set i32:$r2, (fp_to_sint (fround GenRegs:$r1)))],
+      [WriteFPU]
+    >;
 
-  def TRNC_SW : FormatVII<0b001011,
-    (outs GenRegs:$r2), (ins GenRegs:$r1),
-    "trnc.sw $r1, $r2",
-    [(set i32:$r2, (fp_to_sint GenRegs:$r1))],
-    [WriteFPU]
-  >;
+    def TRNC_SW : FormatVII<0b001011,
+      (outs GenRegs:$r2), (ins GenRegs:$r1),
+      "trnc.sw $r1, $r2",
+      [(set i32:$r2, (fp_to_sint GenRegs:$r1))],
+      [WriteFPU]
+    >;
+  }
 }
 
 let Uses = [SR5], usesCustomInserter = 1 in {
@@ -527,7 +527,7 @@ let Uses = [SR5], usesCustomInserter = 1 in {
 // flags that BCond/SETF read, and idk how to express that dependency in tablegen.
 let Uses = [SR5] in {
   let isTerminator = 1, isBranch = 1 in
-  def Bcond : FormatIII<0b100,
+  def Bcond : FormatIII<0b0,
     (outs), (ins condcode:$cond, bcondtarget:$disp),
     "b$cond $disp",
     [(V810Bcond imm:$cond, bb:$disp)],
@@ -668,6 +668,25 @@ let r2 = 0, imm = 0 in {
   >;
 }
 
+let Predicates = [IsV830] in {
+  let r2 = 0, imm = 1 in {
+    def STBY : FormatII<0b011010,
+      (outs), (ins),
+      "stby",
+      [],
+      [WriteBranch]
+    >;
+    let isReturn = 1, isTerminator = 1, isBarrier = 1 in 
+    def BRKRET : FormatII<0b011001,
+      (outs), (ins),
+      "brkret",
+      [(retiglue)],
+      [WriteBranch]
+    >;
+  }
+
+}
+
 let isBarrier = 1, isTerminator = 1, r2 = 0 in
 def TRAP : FormatII<0b011000,
   (outs), (ins uimm5Op:$imm),
@@ -690,14 +709,16 @@ class BitstringInst<bits<5> subop, string asmstr>
   let mayStore = 1;
 }
 
-def ANDBSU  : BitstringInst<0b01001, "andbsu">;
-def ANDNBSU : BitstringInst<0b01101, "andnbsu">;
-def MOVBSU  : BitstringInst<0b01011, "movbsu">;
-def NOTBSU  : BitstringInst<0b01111, "notbsu">;
-def ORBSU   : BitstringInst<0b01000, "orbsu">;
-def ORNBSU  : BitstringInst<0b01100, "ornbsu">;
-def XORBSU  : BitstringInst<0b01010, "xorbsu">;
-def XORNBSU : BitstringInst<0b01110, "xornbsu">;
+let Predicates = [IsV810] in {
+  def ANDBSU  : BitstringInst<0b01001, "andbsu">;
+  def ANDNBSU : BitstringInst<0b01101, "andnbsu">;
+  def MOVBSU  : BitstringInst<0b01011, "movbsu">;
+  def NOTBSU  : BitstringInst<0b01111, "notbsu">;
+  def ORBSU   : BitstringInst<0b01000, "orbsu">;
+  def ORNBSU  : BitstringInst<0b01100, "ornbsu">;
+  def XORBSU  : BitstringInst<0b01010, "xorbsu">;
+  def XORNBSU : BitstringInst<0b01110, "xornbsu">;
+}
 
 // and bitstring searches
 class BitstringSearchInst<bits<5> subop, string asmstr>
@@ -710,10 +731,12 @@ class BitstringSearchInst<bits<5> subop, string asmstr>
   let Itinerary = IIC_Load;
 }
 
-def SCH0BSD : BitstringSearchInst<0b00001, "sch0bsd">;
-def SCH0BSU : BitstringSearchInst<0b00000, "sch0bsu">;
-def SCH1BSD : BitstringSearchInst<0b00011, "sch1bsd">;
-def SCH1BSU : BitstringSearchInst<0b00010, "sch1bsu">;
+let Predicates = [IsV810] in {
+  def SCH0BSD : BitstringSearchInst<0b00001, "sch0bsd">;
+  def SCH0BSU : BitstringSearchInst<0b00000, "sch0bsu">;
+  def SCH1BSD : BitstringSearchInst<0b00011, "sch1bsd">;
+  def SCH1BSU : BitstringSearchInst<0b00010, "sch1bsu">;
+}
 
 // the one atomic operator
 // $rcmp is always the same as r2, and rswap is always R30.
@@ -728,8 +751,7 @@ def CAXI : FormatVI<0b111010,
   [WriteLoad, WriteStore]
 >;
 
-// VB-specific instructions
-let Predicates = [IsNintendo] in {
+let Predicates = [IsV830orNintendo] in {
   let Defs = [SR5], r2 = 0, imm = 0 in {
     def CLI : FormatII<0b010110,
       (outs), (ins),
@@ -744,6 +766,10 @@ let Predicates = [IsNintendo] in {
       [WriteI]
     >;
   }
+}
+
+// VB-specific instructions
+let Predicates = [IsNintendo] in {
 
   let Constraints = "$r2 = $r2_" in
   def MPYHW : FormatVII<0b001100,
@@ -778,6 +804,138 @@ let Predicates = [IsNintendo] in {
 
   def : Pat<(i32 (bswap GenRegs:$r2)),
             (XB (XH (XB GenRegs:$r2)))>;
+
+}
+
+// V830 instructions
+let Predicates = [IsV830] in {
+
+  let Uses = [SR5] in {
+  let isTerminator = 1, isBranch = 1 in
+  def ABcond : FormatIII<0b1,
+    (outs), (ins condcode:$cond, bcondtarget:$disp),
+    "ab$cond $disp",
+    [(V810Bcond imm:$cond, bb:$disp)],
+    [WriteBranch]
+  >;
+  }
+
+  def MULI : FormatV<0b110010,
+    (outs GenRegs:$r2), (ins GenRegs:$r1, simm16Op:$imm),
+    "muli $imm, $r1, $r2",
+    [(set i32:$r2, (smulfixsat GenRegs:$r1, simm16:$imm, 0))],
+    [WriteIMul]
+  >;
+
+  let Constraints = "$r2 = $r2_" in 
+  def MACI : FormatV<0b110110,
+    (outs GenRegs:$r2), (ins GenRegs:$r1, GenRegs:$r2_, simm16Op:$imm),
+    "maci $imm, $r1, $r2",
+    [(set i32:$r2, (saddsat GenRegs:$r2_, (smulfix GenRegs:$r1, simm16:$imm, 0)))], 
+    [WriteIMul]
+  >;
+
+  def BILD : FormatVII<0b100000,
+    (outs), (ins GenRegs:$r2, GenRegs:$r1),
+    "bild $r1, $r2",
+    [],
+    [WriteLoad, WriteStore]
+  >;
+
+  def BDLD : FormatVII<0b100001,
+    (outs), (ins GenRegs:$r2, GenRegs:$r1),
+    "bdld $r1, $r2",
+    [],
+    [WriteLoad, WriteStore]
+  >;
+
+  def BIST : FormatVII<0b100010,
+    (outs), (ins GenRegs:$r1, GenRegs:$r2),
+    "bist $r2, $r1",
+    [],
+    [WriteLoad, WriteStore]
+  >;
+
+  def BDST : FormatVII<0b100011,
+    (outs), (ins GenRegs:$r1, GenRegs:$r2),
+    "bdst $r2, $r1",
+    [],
+    [WriteLoad, WriteStore]
+  >;
+
+  def SATADD3 : FormatVIII<0b010000,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "satadd3 $r1, $r2, $r3",
+    [(set i32:$r3, (saddsat GenRegs:$r1, GenRegs:$r2))],
+    [WriteALU]
+  >;
+
+  def SATSUB3 : FormatVIII<0b010001,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "satsub3 $r1, $r2, $r3",
+    [(set i32:$r3, (ssubsat GenRegs:$r2, GenRegs:$r1))],
+    [WriteALU]
+  >;
+
+  def MIN3 : FormatVIII<0b010010,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "min3 $r1, $r2, $r3",
+    [(set i32:$r3, (smin GenRegs:$r2, GenRegs:$r1))],
+    [WriteALU]
+  >;
+
+  def MAX3 : FormatVIII<0b010011,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "max3 $r1, $r2, $r3",
+    [(set i32:$r3, (smax GenRegs:$r2, GenRegs:$r1))],
+    [WriteALU]
+  >;
+
+  let Constraints = "$r3 = $r3_" in 
+  def SHLD3 : FormatVIII<0b011000,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2, GenRegs:$r3_),
+    "shld3 $r1, $r2, $r3",
+    [(set i32:$r3, (fshl GenRegs:$r3_, GenRegs:$r2, GenRegs:$r1))],
+    [WriteALU]
+  >;
+
+  let Constraints = "$r3 = $r3_" in 
+  def SHRD3 : FormatVIII<0b011001,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2, GenRegs:$r3_),
+    "shrd3 $r1, $r2, $r3",
+    [(set i32:$r3, (fshr GenRegs:$r3_, GenRegs:$r2, GenRegs:$r1))],
+    [WriteALU]
+  >;
+
+  let Constraints = "$r3 = $r3_" in 
+  def MACT3 : FormatVIII<0b011100,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2, GenRegs:$r3_),
+    "mact3 $r1, $r2, $r3",
+    [(set i32:$r3, (saddsat GenRegs:$r3_, (mulhs GenRegs:$r2, GenRegs:$r1)))],
+    [WriteIMul]
+  >;
+
+  let Constraints = "$r3 = $r3_" in 
+  def MAC3 : FormatVIII<0b011101,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2, GenRegs:$r3_),
+    "mac3 $r1, $r2, $r3",
+    [(set i32:$r3, (saddsat GenRegs:$r3_, (smulfix GenRegs:$r2, GenRegs:$r1, 0)))], 
+    [WriteIMul]
+  >;
+
+  def MULT3 : FormatVIII<0b011110,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "mult3 $r1, $r2, $r3",
+    [(set i32:$r3, (mulhs GenRegs:$r2, GenRegs:$r1))],
+    [WriteIMul]
+  >;
+
+  def MUL3 : FormatVIII<0b011111,
+    (outs GenRegs:$r3), (ins GenRegs:$r1, GenRegs:$r2),
+    "mul3 $r1, $r2, $r3",
+    [(set i32:$r3, (smulfixsat GenRegs:$r2, GenRegs:$r1, 0))],
+    [WriteIMul]
+  >;
 
 }
 

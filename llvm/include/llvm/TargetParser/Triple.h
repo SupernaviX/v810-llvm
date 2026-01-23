@@ -111,7 +111,8 @@ public:
     renderscript64, // 64-bit RenderScript
     ve,             // NEC SX-Aurora Vector Engine
     v810,           // NEC V810
-    LastArchType = v810
+    v830,           // NEC V830
+    LastArchType = v830
   };
   enum SubArchType {
     NoSubArch,
@@ -154,6 +155,7 @@ public:
 
     AArch64SubArch_arm64e,
     AArch64SubArch_arm64ec,
+    AArch64SubArch_lfi,
 
     KalimbaSubArch_v3,
     KalimbaSubArch_v4,
@@ -242,14 +244,18 @@ public:
     AMDPAL,     // AMD PAL Runtime
     HermitCore, // HermitCore Unikernel/Multikernel
     Hurd,       // GNU/Hurd
-    WASI,       // Experimental WebAssembly OS
+    WASI,       // Deprecated alias of WASI 0.1; in the future will be WASI 1.0.
+    WASIp1,     // WASI 0.1
+    WASIp2,     // WASI 0.2
+    WASIp3,     // WASI 0.3
     Emscripten,
     ShaderModel, // DirectX ShaderModel
     LiteOS,
     Serenity,
     Vulkan, // Vulkan SPIR-V
     CheriotRTOS,
-    LastOSType = CheriotRTOS
+    ChipStar,
+    LastOSType = ChipStar
   };
   enum EnvironmentType {
     UnknownEnvironment,
@@ -758,7 +764,8 @@ public:
 
   /// Tests whether the OS is WASI.
   bool isOSWASI() const {
-    return getOS() == Triple::WASI;
+    return getOS() == Triple::WASI || getOS() == Triple::WASIp1 ||
+           getOS() == Triple::WASIp2 || getOS() == Triple::WASIp3;
   }
 
   /// Tests whether the OS is Emscripten.
@@ -770,7 +777,7 @@ public:
   bool isOSGlibc() const {
     return (getOS() == Triple::Linux || getOS() == Triple::KFreeBSD ||
             getOS() == Triple::Hurd) &&
-           !isAndroid();
+           !isAndroid() && !isMusl() && getEnvironment() != Triple::PAuthTest;
   }
 
   /// Tests whether the OS is AIX.
@@ -937,6 +944,12 @@ public:
   /// Tests whether the target is ARM (little and big endian).
   bool isARM() const {
     return getArch() == Triple::arm || getArch() == Triple::armeb;
+  }
+
+  /// Tests whether the target is LFI.
+  bool isLFI() const {
+    return getArch() == Triple::aarch64 &&
+           getSubArch() == Triple::AArch64SubArch_lfi;
   }
 
   /// Tests whether the target supports the EHABI exception
@@ -1125,6 +1138,12 @@ public:
 
   /// Tests whether the target is V810.
   bool isV810() const { return getArch() == Triple::v810; }
+
+  /// Tests whether the target is V830.
+  bool isV830() const { return getArch() == Triple::v830; }
+
+  /// Tests whether the target is an NEC architecture
+  bool isNEC() const { return isV810() || isV830(); }
 
   /// Tests whether the target is x86 (32- or 64-bit).
   bool isX86() const {

@@ -92,6 +92,8 @@ void elf::setTarget(Ctx &ctx) {
     return setSystemZTargetInfo(ctx);
   case EM_V810:
     return setV810TargetInfo(ctx);
+  case EM_V830:
+    return setV830TargetInfo(ctx);
   case EM_X86_64:
     return setX86_64TargetInfo(ctx);
   default:

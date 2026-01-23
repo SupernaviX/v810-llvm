@@ -21,7 +21,7 @@ MCCodeEmitter *createV810MCCodeEmitter(const MCInstrInfo &MCII,
 MCAsmBackend *createV810AsmBackend(const Target &T, const MCSubtargetInfo &STI,
                                    const MCRegisterInfo &MRI,
                                    const MCTargetOptions &Options);
-std::unique_ptr<MCObjectTargetWriter> createV810ObjectWriter(uint8_t OSABI);
+std::unique_ptr<MCObjectTargetWriter> createV810ObjectWriter(bool isV830, uint8_t OSABI);
 
 } // End llvm namespace
 

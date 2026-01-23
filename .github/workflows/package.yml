@@ -3,7 +3,7 @@ concurrency: compiler-package
 on:
   workflow_dispatch:
   push:
-    branches: [main, v830]
+    branches: [main]
 jobs:
   package:
     runs-on: ${{ matrix.os }}
@@ -106,18 +106,6 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: ubuntu-22.04
-      - name: Prerelease
-        uses: softprops/action-gh-release@v1
-        if: (github.head_ref || github.ref_name) == 'v830'
-        with:
-          body: "Compiler build for v830"
-          name: "${{ steps.getDate.outputs.TODAY }}"
-          tag_name: "llvm-v810-${{ steps.getDate.outputs.TODAY }}-v830"
-          prerelease: true
-          files: |
-            llvm-v810-windows-v830.7z
-            llvm-v810-darwin-v830.tar.xz
-            llvm-v810-linux-v830.tar.xz
       - name: Release
         uses: softprops/action-gh-release@v1
         if: (github.head_ref || github.ref_name) == 'main'

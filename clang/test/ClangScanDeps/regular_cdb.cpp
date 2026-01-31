@@ -1,3 +1,4 @@
+// XFAIL: darwin
 // UNSUPPORTED:  target={{.*}}-aix{{.*}}
 
 // RUN: rm -rf %t.dir

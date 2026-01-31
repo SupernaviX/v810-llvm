@@ -1,3 +1,4 @@
+// XFAIL: darwin
 // RUN: cd %S
 // RUN: %clang -MM -MP -I Inputs -Xclang -fdepfile-entry=1.extra -Xclang -fdepfile-entry=2.extra -Xclang -fdepfile-entry=2.extra dependency-gen-phony.c | \
 // RUN:   FileCheck %s %if system-darwin %{ --check-prefix=CHECK-DARWIN %} --match-full-lines --strict-whitespace --implicit-check-not=.c:

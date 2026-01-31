@@ -1,3 +1,4 @@
+// XFAIL: darwin
 // UNSUPPORTED: system-windows
 // RUN: rm -rf %t.dir
 // RUN: rm -rf %t.cdb

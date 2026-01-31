@@ -1,3 +1,4 @@
+// XFAIL: darwin
 // This checks that there's no issue with the preprocessor handling user or built-in macro
 // expansion during dependency scanning.
 

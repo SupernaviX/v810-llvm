@@ -396,7 +396,12 @@ bool V810AsmParser::parseInstruction(ParseInstructionInfo &Info,
     }
   }
 
-  return getLexer().isNot(AsmToken::EndOfStatement);
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    SMLoc Loc = getLexer().getLoc();
+    return Error(Loc, "unexpected token");
+  }
+  getLexer().Lex(); // Consume the EndOfStatement.
+  return false;
 }
 
 bool V810AsmParser::ParseDirective(AsmToken DirectiveID) {

@@ -586,6 +586,9 @@ static void simplifyLiveInsWithSCEV(VPlan &Plan,
   }
 }
 
+/// To make RUN_VPLAN_PASS print initial VPlan.
+static void printAfterInitialConstruction(VPlan &) {}
+
 std::unique_ptr<VPlan>
 VPlanTransforms::buildVPlan0(Loop *TheLoop, LoopInfo &LI, Type *InductionTy,
                              DebugLoc IVDL, PredicatedScalarEvolution &PSE,
@@ -594,6 +597,8 @@ VPlanTransforms::buildVPlan0(Loop *TheLoop, LoopInfo &LI, Type *InductionTy,
   std::unique_ptr<VPlan> VPlan0 = Builder.buildPlainCFG();
   addInitialSkeleton(*VPlan0, InductionTy, IVDL, PSE, TheLoop);
   simplifyLiveInsWithSCEV(*VPlan0, PSE);
+
+  RUN_VPLAN_PASS_NO_VERIFY(printAfterInitialConstruction, *VPlan0);
   return VPlan0;
 }
 
@@ -1040,6 +1045,8 @@ void VPlanTransforms::addMinimumIterationCheck(
       // an overflow to zero when updating induction variables and so an
       // additional overflow check is required before entering the vector loop.
 
+      VPValue *StepVPV = Builder.createExpandSCEV(Step);
+
       // Get the maximum unsigned value for the type.
       VPValue *MaxUIntTripCount =
           Plan.getConstantInt(cast<IntegerType>(TripCountTy)->getMask());
@@ -1050,8 +1057,8 @@ void VPlanTransforms::addMinimumIterationCheck(
       // Don't execute the vector loop if (UMax - n) < (VF * UF).
       // FIXME: Should only check VF * UF, but currently checks Step=max(VF*UF,
       // minProfitableTripCount).
-      TripCountCheck = Builder.createICmp(ICmpInst::ICMP_ULT, DistanceToMax,
-                                          Builder.createExpandSCEV(Step), DL);
+      TripCountCheck =
+          Builder.createICmp(ICmpInst::ICMP_ULT, DistanceToMax, StepVPV, DL);
     } else {
       // TripCountCheck = false, folding tail implies positive vector trip
       // count.
@@ -1149,6 +1156,19 @@ static VPInstruction *findComputeReductionResult(VPReductionPHIRecipe *PhiR) {
     return nullptr;
   return findUserOf<VPInstruction::ComputeReductionResult>(
       cast<VPSingleDefRecipe>(SelR));
+}
+
+/// Find and return the final select instruction of the FindIV result pattern
+/// for the given \p BackedgeVal:
+/// select(icmp ne ComputeReductionResult(ReducedIV), Sentinel),
+///        ComputeReductionResult(ReducedIV), Start.
+static VPInstruction *findFindIVSelect(VPValue *BackedgeVal) {
+  return cast<VPInstruction>(
+      vputils::findRecipe(BackedgeVal, [BackedgeVal](VPRecipeBase *R) {
+        auto *VPI = dyn_cast<VPInstruction>(R);
+        return VPI &&
+               matchFindIVResult(VPI, m_Specific(BackedgeVal), m_VPValue());
+      }));
 }
 
 bool VPlanTransforms::handleMaxMinNumReductions(VPlan &Plan) {
@@ -1524,14 +1544,10 @@ bool VPlanTransforms::handleMultiUseReductions(VPlan &Plan) {
     // vp<%cmp> = icmp ne vp<%iv.rdx>, SENTINEL
     // vp<%find.iv.result> = select vp<%cmp>, vp<%iv.rdx>, ir<0>
     //
-    // Find the ComputeReductionResult with minmax kind for FindIV.
-    auto *FindIVRdxResult = cast<VPInstruction>(findUserOf(
-        FindIVPhiR->getBackedgeValue(),
-        m_VPInstruction<VPInstruction::ComputeReductionResult>(m_VPValue())));
-    // Find the icmp -> select pattern wrapping the reduction result.
-    auto *FindIVCmp = findUserOf<Instruction::ICmp>(FindIVRdxResult);
-    [[maybe_unused]] auto *FindIVSelect =
-        findUserOf<Instruction::Select>(FindIVCmp);
+    // Find the FindIV result pattern.
+    auto *FindIVSelect = findFindIVSelect(FindIVPhiR->getBackedgeValue());
+    auto *FindIVCmp = FindIVSelect->getOperand(0)->getDefiningRecipe();
+    auto *FindIVRdxResult = cast<VPInstruction>(FindIVCmp->getOperand(0));
     assert(FindIVSelect->getParent() == MinOrMaxResult->getParent() &&
            "both results must be computed in the same block");
     MinOrMaxResult->moveBefore(*FindIVRdxResult->getParent(),

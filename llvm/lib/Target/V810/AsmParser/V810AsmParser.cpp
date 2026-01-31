@@ -38,8 +38,8 @@ class V810AsmParser : public MCTargetAsmParser {
                                         SMLoc &EndLoc) override;
   bool parseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
-  bool ParseDirective(AsmToken DirectiveID) override;
-  bool parseSSectionDirective(StringRef Section, unsigned Type);
+  ParseStatus parseDirective(AsmToken DirectiveID) override;
+  ParseStatus parseSSectionDirective(StringRef Section, unsigned Type);
 
   ParseStatus parseMEMOperand(OperandVector &Operands);
   ParseStatus parseBranchTargetOperand(OperandVector &Operands);
@@ -404,24 +404,22 @@ bool V810AsmParser::parseInstruction(ParseInstructionInfo &Info,
   return false;
 }
 
-bool V810AsmParser::ParseDirective(AsmToken DirectiveID) {
+ParseStatus V810AsmParser::parseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getString();
   if (IDVal == ".sbss") {
-    parseSSectionDirective(IDVal, ELF::SHT_NOBITS);
-    return false;
+    return parseSSectionDirective(IDVal, ELF::SHT_NOBITS);
   }
   if (IDVal == ".sdata") {
-    parseSSectionDirective(IDVal, ELF::SHT_PROGBITS);
-    return false;
+    return parseSSectionDirective(IDVal, ELF::SHT_PROGBITS);
   }
   // Let the MC layer handle everything else
-  return true;
+  return ParseStatus::NoMatch;
 }
 
-bool V810AsmParser::parseSSectionDirective(StringRef Section, unsigned Type) {
+ParseStatus V810AsmParser::parseSSectionDirective(StringRef Section, unsigned Type) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     Error(getLexer().getLoc(), "unexpected token, expected end of statement");
-    return false;
+    return ParseStatus::Failure;
   }
 
   MCSection *ELFSection = getContext().getELFSection(
@@ -429,7 +427,7 @@ bool V810AsmParser::parseSSectionDirective(StringRef Section, unsigned Type) {
   getParser().getStreamer().switchSection(ELFSection);
 
   getParser().Lex(); // Eat EndOfStatement token.
-  return false;
+  return ParseStatus::Success;
 }
 
 // offset[reg]

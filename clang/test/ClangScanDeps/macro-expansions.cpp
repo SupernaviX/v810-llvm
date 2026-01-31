@@ -1,3 +1,4 @@
+// UNSUPPORTED: system-darwin
 // This checks that there's no issue with the preprocessor handling user or built-in macro
 // expansion during dependency scanning.
 
@@ -5,9 +6,10 @@
 // RUN: split-file %s %t
 // RUN: sed -e "s|DIR|%/t|g" %t/cdb.json.template > %t/cdb.json
 
-// RUN: clang-scan-deps -compilation-database %t/cdb.json | FileCheck %s
+// RUN: clang-scan-deps -compilation-database %t/cdb.json | FileCheck %s %if system-darwin %{ --check-prefixes=CHECK,CHECK-DARWIN %}
 
 // CHECK: test.o:
+// CHECK-DARWIN-NEXT: SDKSettings.json
 // CHECK-NEXT: test.cpp
 // CHECK-NEXT: header1.h
 // CHECK-NEXT: header2.h

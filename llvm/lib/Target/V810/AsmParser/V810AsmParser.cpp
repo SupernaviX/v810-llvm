@@ -38,8 +38,8 @@ class V810AsmParser : public MCTargetAsmParser {
                                         SMLoc &EndLoc) override;
   bool parseInstruction(ParseInstructionInfo &Info, StringRef Name,
                         SMLoc NameLoc, OperandVector &Operands) override;
-  bool ParseDirective(AsmToken DirectiveID) override;
-  bool parseSSectionDirective(StringRef Section, unsigned Type);
+  ParseStatus parseDirective(AsmToken DirectiveID) override;
+  ParseStatus parseSSectionDirective(StringRef Section, unsigned Type);
 
   ParseStatus parseMEMOperand(OperandVector &Operands);
   ParseStatus parseBranchTargetOperand(OperandVector &Operands);
@@ -396,27 +396,30 @@ bool V810AsmParser::parseInstruction(ParseInstructionInfo &Info,
     }
   }
 
-  return getLexer().isNot(AsmToken::EndOfStatement);
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    SMLoc Loc = getLexer().getLoc();
+    return Error(Loc, "unexpected token");
+  }
+  getLexer().Lex(); // Consume the EndOfStatement.
+  return false;
 }
 
-bool V810AsmParser::ParseDirective(AsmToken DirectiveID) {
+ParseStatus V810AsmParser::parseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getString();
   if (IDVal == ".sbss") {
-    parseSSectionDirective(IDVal, ELF::SHT_NOBITS);
-    return false;
+    return parseSSectionDirective(IDVal, ELF::SHT_NOBITS);
   }
   if (IDVal == ".sdata") {
-    parseSSectionDirective(IDVal, ELF::SHT_PROGBITS);
-    return false;
+    return parseSSectionDirective(IDVal, ELF::SHT_PROGBITS);
   }
   // Let the MC layer handle everything else
-  return true;
+  return ParseStatus::NoMatch;
 }
 
-bool V810AsmParser::parseSSectionDirective(StringRef Section, unsigned Type) {
+ParseStatus V810AsmParser::parseSSectionDirective(StringRef Section, unsigned Type) {
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     Error(getLexer().getLoc(), "unexpected token, expected end of statement");
-    return false;
+    return ParseStatus::Failure;
   }
 
   MCSection *ELFSection = getContext().getELFSection(
@@ -424,10 +427,8 @@ bool V810AsmParser::parseSSectionDirective(StringRef Section, unsigned Type) {
   getParser().getStreamer().switchSection(ELFSection);
 
   getParser().Lex(); // Eat EndOfStatement token.
-  return false;
+  return ParseStatus::Success;
 }
-
-#include <iostream>
 
 // offset[reg]
 // offset is an (optional) expression, reg is a register
@@ -439,33 +440,26 @@ V810AsmParser::parseMEMOperand(OperandVector &Operands) {
   // Parse the offset (if it exists)
   const MCExpr *EVal;
   if (getLexer().is(AsmToken::LBrac)) {
-    std::cerr << "no expr found" << std::endl;
     EVal = MCConstantExpr::create(0, getContext());
   } else {
-    std::cerr << "expr found" << std::endl;
     if (getParser().parseExpression(EVal, E))
       return ParseStatus::Failure;
   }
   getLexer().Lex(); // eat the [
 
-  std::cerr << "parse reg" << std::endl;
   // parse the register
   MCRegister Reg;
   if (parseRegister(Reg, S, E))
     return ParseStatus::Failure;
-  std::cerr << "parsed reg" << std::endl;
 
   // eat the ]
   E = getTok().getEndLoc();
-  std::cerr << "on nom nom" << std::endl;
   if (!getLexer().is(AsmToken::RBrac))
     return ParseStatus::Failure;
-  std::cerr << "phew" << std::endl;
   getLexer().Lex();
 
   Operands.push_back(V810Operand::CreateMEMri(Reg, EVal, S, E));
   Operands.back()->dump();
-  std::cerr << "im a wiener" << std::endl;
 
   return ParseStatus::Success;
 }
@@ -509,16 +503,16 @@ V810AsmParser::parseCondOperand(OperandVector &Operands) {
 
   unsigned Val = llvm::StringSwitch<unsigned>(getTok().getString())
     .CaseLower("v", V810CC::CC_V)
-    .CasesLower("c", "l", V810CC::CC_C)
-    .CasesLower("e", "z", V810CC::CC_E)
+    .CasesLower({"c", "l"}, V810CC::CC_C)
+    .CasesLower({"e", "z"}, V810CC::CC_E)
     .CaseLower("nh", V810CC::CC_NH)
     .CaseLower("n", V810CC::CC_N)
     .CaseLower("t", V810CC::CC_BR)
     .CaseLower("lt", V810CC::CC_LT)
     .CaseLower("le", V810CC::CC_LE)
     .CaseLower("nv", V810CC::CC_NV)
-    .CasesLower("nc", "nl", V810CC::CC_NC)
-    .CasesLower("ne", "nz", V810CC::CC_NE)
+    .CasesLower({"nc", "nl"}, V810CC::CC_NC)
+    .CasesLower({"ne", "nz"}, V810CC::CC_NE)
     .CaseLower("h", V810CC::CC_H)
     .CaseLower("p", V810CC::CC_P)
     .CaseLower("f", V810CC::CC_NOP)

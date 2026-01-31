@@ -18,6 +18,13 @@ public:
   V810TargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
     : TargetInfo(Triple) {
       resetDataLayout("e-p:32:32-i32:32-i64:32-f32:32-a:0:32-n32:32-S32");
+      IntWidth = 32;
+      IntAlign = 32;
+      IntMaxType = SignedLongLong;
+      Int64Type = SignedLongLong;
+      SizeType = UnsignedInt;
+      PtrDiffType = SignedInt;
+      IntPtrType = SignedInt;
       MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 32;
       DoubleWidth = 64;
       DoubleAlign = 32;

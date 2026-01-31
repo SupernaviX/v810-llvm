@@ -1,4 +1,4 @@
-// XFAIL: darwin
+// UNSUPPORTED: system-darwin
 // RUN: rm -rf %t.dir
 // RUN: rm -rf %t.cdb
 // RUN: rm -rf %t_clangcl.cdb

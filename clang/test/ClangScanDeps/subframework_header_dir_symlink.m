@@ -1,4 +1,4 @@
-// XFAIL: darwin
+// UNSUPPORTED: system-darwin
 // REQUIRES: symlinks
 // RUN: rm -rf %t.dir
 // RUN: rm -rf %t.cdb

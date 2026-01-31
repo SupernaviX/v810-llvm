@@ -1,5 +1,5 @@
 // UNSUPPORTED: target={{.*}}-aix{{.*}}
-// XFAIL: darwin
+// UNSUPPORTED: system-darwin
 //
 // RUN: rm -fr %t
 // RUN: mkdir -p %t

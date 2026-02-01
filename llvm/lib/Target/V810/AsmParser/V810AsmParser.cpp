@@ -442,7 +442,6 @@ V810AsmParser::parseMEMOperand(OperandVector &Operands) {
   Lex();
 
   Operands.push_back(V810Operand::CreateMEMri(Reg, EVal, S, E));
-  Operands.back()->dump();
 
   return ParseStatus::Success;
 }

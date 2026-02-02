@@ -320,12 +320,12 @@ ParseStatus V810AsmParser::tryParseRegister(MCRegister &RegNo,
   std::string RegName = Tok.getString().lower();
   RegNo = MatchRegisterName(RegName);
   if (RegNo) {
-    Parser.Lex(); // eat the identifier
+    Lex(); // eat the identifier
     return ParseStatus::Success;
   }
   RegNo = MatchRegisterAltName(RegName);
   if (RegNo) {
-    Parser.Lex();
+    Lex();
     return ParseStatus::Success;
   }
 
@@ -337,12 +337,12 @@ ParseStatus V810AsmParser::tryParseRegister(MCRegister &RegNo,
     RegName = Sym->getName().lower();
     RegNo = MatchRegisterName(RegName);
     if (RegNo) {
-      Parser.Lex(); // eat the identifier
+      Lex(); // eat the identifier
       return ParseStatus::Success;
     }
     RegNo = MatchRegisterAltName(RegName);
     if (RegNo) {
-      Parser.Lex();
+      Lex();
       return ParseStatus::Success;
     }
     if (!Sym->isVariable()) break;
@@ -360,10 +360,6 @@ bool V810AsmParser::parseInstruction(ParseInstructionInfo &Info,
                                      OperandVector &Operands) {
   Operands.push_back(V810Operand::CreateToken(Name, NameLoc));
 
-  while (getLexer().is(AsmToken::Comment)) {
-    getLexer().Lex();
-  }
-
   // If there are no operands, we're done
   if (getLexer().is(AsmToken::EndOfStatement))
     return false;
@@ -374,33 +370,20 @@ bool V810AsmParser::parseInstruction(ParseInstructionInfo &Info,
     return Error(Loc, "unexpected token");
   }
 
-  while (getLexer().is(AsmToken::Comment)) {
-    getLexer().Lex();
-  }
-
   // read other operands
-  while (getLexer().is(AsmToken::Comma)) {
-    getLexer().Lex();
-
-    while (getLexer().is(AsmToken::Comment)) {
-      getLexer().Lex();
-    }
-
+  while (parseOptionalToken(AsmToken::Comma)) {
     if (!parseOperand(Operands, Name).isSuccess()) {
       SMLoc Loc = getLexer().getLoc();
       return Error(Loc, "unexpected token");
-    }
-
-    while (getLexer().is(AsmToken::Comment)) {
-      getLexer().Lex();
     }
   }
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     SMLoc Loc = getLexer().getLoc();
+    getParser().eatToEndOfStatement();
     return Error(Loc, "unexpected token");
   }
-  getLexer().Lex(); // Consume the EndOfStatement.
+  Lex(); // Consume the EndOfStatement.
   return false;
 }
 
@@ -426,7 +409,7 @@ ParseStatus V810AsmParser::parseSSectionDirective(StringRef Section, unsigned Ty
       Section, Type, ELF::SHF_WRITE | ELF::SHF_ALLOC | ELF::SHF_V810_GPREL);
   getParser().getStreamer().switchSection(ELFSection);
 
-  getParser().Lex(); // Eat EndOfStatement token.
+  Lex(); // Eat EndOfStatement token.
   return ParseStatus::Success;
 }
 
@@ -445,7 +428,7 @@ V810AsmParser::parseMEMOperand(OperandVector &Operands) {
     if (getParser().parseExpression(EVal, E))
       return ParseStatus::Failure;
   }
-  getLexer().Lex(); // eat the [
+  Lex(); // eat the [
 
   // parse the register
   MCRegister Reg;
@@ -456,10 +439,9 @@ V810AsmParser::parseMEMOperand(OperandVector &Operands) {
   E = getTok().getEndLoc();
   if (!getLexer().is(AsmToken::RBrac))
     return ParseStatus::Failure;
-  getLexer().Lex();
+  Lex();
 
   Operands.push_back(V810Operand::CreateMEMri(Reg, EVal, S, E));
-  Operands.back()->dump();
 
   return ParseStatus::Success;
 }

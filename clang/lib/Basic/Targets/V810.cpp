@@ -30,7 +30,12 @@ ArrayRef<TargetInfo::GCCRegAlias> V810TargetInfo::getGCCRegAliases() const {
 
 void V810TargetInfo::getTargetDefines(const LangOptions &Opts,
                                       MacroBuilder &Builder) const {
-  DefineStd(Builder, "v810", Opts);
+  if (getTriple().getArch() == llvm::Triple::v810) {
+    DefineStd(Builder, "v810", Opts);
+  }
+  if (getTriple().getArch() == llvm::Triple::v830) {
+    DefineStd(Builder, "v830", Opts);
+  }
 }
 
 V810TargetInfo::CPUKind V810TargetInfo::getCPUKind(StringRef Name) const {

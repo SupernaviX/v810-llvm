@@ -92,13 +92,26 @@ public:
 
   // Builtin types methods
   BuiltinTypeDeclBuilder &addLoadMethods();
+  BuiltinTypeDeclBuilder &addByteAddressBufferLoadMethods();
+  BuiltinTypeDeclBuilder &addByteAddressBufferStoreMethods();
   BuiltinTypeDeclBuilder &addSampleMethods(ResourceDimension Dim);
+  BuiltinTypeDeclBuilder &addSampleBiasMethods(ResourceDimension Dim);
+  BuiltinTypeDeclBuilder &addSampleGradMethods(ResourceDimension Dim);
+  BuiltinTypeDeclBuilder &addSampleLevelMethods(ResourceDimension Dim);
+  BuiltinTypeDeclBuilder &addSampleCmpMethods(ResourceDimension Dim);
+  BuiltinTypeDeclBuilder &addSampleCmpLevelZeroMethods(ResourceDimension Dim);
+  BuiltinTypeDeclBuilder &addGatherMethods(ResourceDimension Dim);
+  BuiltinTypeDeclBuilder &addGatherCmpMethods(ResourceDimension Dim);
   BuiltinTypeDeclBuilder &addIncrementCounterMethod();
   BuiltinTypeDeclBuilder &addDecrementCounterMethod();
   BuiltinTypeDeclBuilder &addHandleAccessFunction(DeclarationName &Name,
-                                                  bool IsConst, bool IsRef);
-  BuiltinTypeDeclBuilder &addLoadWithStatusFunction(DeclarationName &Name,
-                                                    bool IsConst);
+                                                  bool IsConst, bool IsRef,
+                                                  QualType ElemTy = QualType());
+  BuiltinTypeDeclBuilder &
+  addLoadWithStatusFunction(DeclarationName &Name, bool IsConst,
+                            QualType ReturnTy = QualType());
+  BuiltinTypeDeclBuilder &addStoreFunction(DeclarationName &Name, bool IsConst,
+                                           QualType ValueType);
   BuiltinTypeDeclBuilder &addAppendMethod();
   BuiltinTypeDeclBuilder &addConsumeMethod();
 
@@ -121,11 +134,13 @@ private:
   BuiltinTypeDeclBuilder &
   addCounterHandleMember(ResourceClass RC, bool IsROV, bool RawBuffer,
                          AccessSpecifier Access = AccessSpecifier::AS_private);
+  QualType getGatherReturnType();
   FieldDecl *getResourceHandleField() const;
   FieldDecl *getResourceCounterHandleField() const;
   QualType getFirstTemplateTypeParam();
   QualType getHandleElementType();
   Expr *getConstantIntExpr(int value);
+  Expr *getConstantUnsignedIntExpr(unsigned value);
   HLSLAttributedResourceType::Attributes getResourceAttrs() const;
 };
 

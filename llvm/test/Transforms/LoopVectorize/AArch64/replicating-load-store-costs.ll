@@ -247,7 +247,7 @@ define void @test_load_gep_widen_induction(ptr noalias %dst, ptr noalias %dst2) 
 entry:
   br label %loop
 
-loop:                                         ; preds = %loop, %entry
+loop:
   %iv = phi i64 [ 0, %entry ], [ %iv.next, %loop ]
   %gep.dst.iv = getelementptr i128, ptr %dst, i64 %iv
   %iv.next = add i64 %iv, 1
@@ -636,7 +636,7 @@ define i32 @test_ptr_iv_load_used_by_other_load(ptr %start, ptr %end) {
 entry:
   br label %loop
 
-loop:                                 ; preds = %loop, %entry
+loop:
   %iv = phi ptr [ %iv.next, %loop ], [ null, %entry ]
   %red = phi i32 [ %red.next, %loop ], [ 0, %entry ]
   %0 = load ptr, ptr %iv, align 8
@@ -734,7 +734,7 @@ define i32 @test_or_reduction_with_stride_2(i32 %scale, ptr %src) {
 ; CHECK-NEXT:    [[TMP66]] = or <16 x i32> [[TMP65]], [[VEC_PHI]]
 ; CHECK-NEXT:    [[INDEX_NEXT]] = add nuw i64 [[INDEX]], 16
 ; CHECK-NEXT:    [[TMP67:%.*]] = icmp eq i64 [[INDEX_NEXT]], 48
-; CHECK-NEXT:    br i1 [[TMP67]], label %[[MIDDLE_BLOCK:.*]], label %[[VECTOR_BODY]], !llvm.loop [[LOOP21:![0-9]+]]
+; CHECK-NEXT:    br i1 [[TMP67]], label %[[MIDDLE_BLOCK:.*]], label %[[VECTOR_BODY]], !llvm.loop [[LOOP22:![0-9]+]]
 ; CHECK:       [[MIDDLE_BLOCK]]:
 ; CHECK-NEXT:    [[TMP68:%.*]] = call i32 @llvm.vector.reduce.or.v16i32(<16 x i32> [[TMP66]])
 ; CHECK-NEXT:    br label %[[SCALAR_PH:.*]]

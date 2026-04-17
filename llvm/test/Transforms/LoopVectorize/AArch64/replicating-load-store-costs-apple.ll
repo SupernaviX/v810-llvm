@@ -283,7 +283,7 @@ define void @test_load_gep_widen_induction(ptr noalias %dst, ptr noalias %dst2) 
 entry:
   br label %loop
 
-loop:                                         ; preds = %loop, %entry
+loop:
   %iv = phi i64 [ 0, %entry ], [ %iv.next, %loop ]
   %gep.dst.iv = getelementptr i128, ptr %dst, i64 %iv
   %iv.next = add i64 %iv, 1
@@ -591,13 +591,13 @@ define double @test_scalarization_cost_for_load_of_address(ptr %src.0, ptr %src.
 ; CHECK-NEXT:    [[STRIDED_VEC:%.*]] = shufflevector <6 x double> [[WIDE_VEC]], <6 x double> poison, <2 x i32> <i32 0, i32 3>
 ; CHECK-NEXT:    [[STRIDED_VEC1:%.*]] = shufflevector <6 x double> [[WIDE_VEC]], <6 x double> poison, <2 x i32> <i32 1, i32 4>
 ; CHECK-NEXT:    [[STRIDED_VEC2:%.*]] = shufflevector <6 x double> [[WIDE_VEC]], <6 x double> poison, <2 x i32> <i32 2, i32 5>
-; CHECK-NEXT:    [[TMP0:%.*]] = fmul <2 x double> [[STRIDED_VEC]], splat (double 3.000000e+00)
-; CHECK-NEXT:    [[TMP1:%.*]] = fmul <2 x double> [[STRIDED_VEC1]], splat (double 3.000000e+00)
-; CHECK-NEXT:    [[TMP2:%.*]] = fmul <2 x double> [[STRIDED_VEC2]], splat (double 3.000000e+00)
-; CHECK-NEXT:    [[TMP3:%.*]] = fadd <2 x double> [[TMP0]], [[TMP1]]
-; CHECK-NEXT:    [[TMP4:%.*]] = fadd <2 x double> [[TMP3]], [[TMP2]]
+; CHECK-NEXT:    [[TMP3:%.*]] = fmul <2 x double> [[STRIDED_VEC]], splat (double 3.000000e+00)
+; CHECK-NEXT:    [[TMP4:%.*]] = fmul <2 x double> [[STRIDED_VEC1]], splat (double 3.000000e+00)
+; CHECK-NEXT:    [[TMP5:%.*]] = fmul <2 x double> [[STRIDED_VEC2]], splat (double 3.000000e+00)
+; CHECK-NEXT:    [[TMP6:%.*]] = fadd <2 x double> [[TMP3]], [[TMP4]]
+; CHECK-NEXT:    [[TMP7:%.*]] = fadd <2 x double> [[TMP6]], [[TMP5]]
 ; CHECK-NEXT:    [[WIDE_LOAD:%.*]] = load <2 x double>, ptr [[SRC_1]], align 8
-; CHECK-NEXT:    [[TMP9:%.*]] = fmul <2 x double> [[TMP4]], [[WIDE_LOAD]]
+; CHECK-NEXT:    [[TMP9:%.*]] = fmul <2 x double> [[TMP7]], [[WIDE_LOAD]]
 ; CHECK-NEXT:    [[TMP11:%.*]] = getelementptr [[T_2:%.*]], ptr [[SRC_2]], i64 1
 ; CHECK-NEXT:    [[GEP_72:%.*]] = getelementptr i8, ptr [[SRC_2]], i64 72
 ; CHECK-NEXT:    [[TMP13:%.*]] = getelementptr i8, ptr [[TMP11]], i64 72
@@ -671,7 +671,7 @@ define i32 @test_ptr_iv_load_used_by_other_load(ptr %start, ptr %end) {
 entry:
   br label %loop
 
-loop:                                 ; preds = %loop, %entry
+loop:
   %iv = phi ptr [ %iv.next, %loop ], [ null, %entry ]
   %red = phi i32 [ %red.next, %loop ], [ 0, %entry ]
   %0 = load ptr, ptr %iv, align 8
@@ -769,7 +769,7 @@ define i32 @test_or_reduction_with_stride_2(i32 %scale, ptr %src) {
 ; CHECK-NEXT:    [[TMP66]] = or <16 x i32> [[TMP65]], [[VEC_PHI]]
 ; CHECK-NEXT:    [[INDEX_NEXT]] = add nuw i64 [[INDEX]], 16
 ; CHECK-NEXT:    [[TMP67:%.*]] = icmp eq i64 [[INDEX_NEXT]], 48
-; CHECK-NEXT:    br i1 [[TMP67]], label %[[MIDDLE_BLOCK:.*]], label %[[VECTOR_BODY]], !llvm.loop [[LOOP21:![0-9]+]]
+; CHECK-NEXT:    br i1 [[TMP67]], label %[[MIDDLE_BLOCK:.*]], label %[[VECTOR_BODY]], !llvm.loop [[LOOP22:![0-9]+]]
 ; CHECK:       [[MIDDLE_BLOCK]]:
 ; CHECK-NEXT:    [[TMP68:%.*]] = call i32 @llvm.vector.reduce.or.v16i32(<16 x i32> [[TMP66]])
 ; CHECK-NEXT:    br label %[[SCALAR_PH:.*]]

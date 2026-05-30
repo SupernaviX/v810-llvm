@@ -34,7 +34,7 @@ bool V810TargetObjectFile::isGlobalInSmallSection(const GlobalObject *GO, const 
   if (GVar->hasSection()) {
     return isSmallDataSection(GVar->getSection());
   }
-  if (TM.getMCSubtargetInfo()->checkFeatures("+gprel")) {
+  if (TM.getMCSubtargetInfo().hasFeature(V810::FeatureGPRelativeRAM)) {
     // Put ALL non-constant variables in a small section
     return true;
   }

@@ -4,7 +4,9 @@ using namespace llvm;
 
 void V810AsmInfo::anchor() {}
 
-V810AsmInfo::V810AsmInfo(const Triple &TheTriple) {
+V810AsmInfo::V810AsmInfo(const Triple &TheTriple,
+                         const MCTargetOptions &Options)
+    : MCAsmInfoELF(Options) {
   CodePointerSize = 4;
   MinInstAlignment = 2;
   MaxInstLength = 4;

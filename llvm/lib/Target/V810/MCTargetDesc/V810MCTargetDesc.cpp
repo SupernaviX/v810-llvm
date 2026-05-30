@@ -24,7 +24,7 @@ using namespace llvm;
 static MCAsmInfo *createV810MCAsmInfo(const MCRegisterInfo &MRI,
                                        const Triple &TT,
                                        const MCTargetOptions &Options) {
-  MCAsmInfo *MAI = new V810AsmInfo(TT);
+  MCAsmInfo *MAI = new V810AsmInfo(TT, Options);
   return MAI;
 }
 

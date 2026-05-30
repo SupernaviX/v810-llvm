@@ -11,7 +11,8 @@ class V810AsmInfo : public MCAsmInfoELF {
   void anchor() override;
 
 public:
-  explicit V810AsmInfo(const Triple &TheTriple);
+  explicit V810AsmInfo(const Triple &TheTriple,
+                       const MCTargetOptions &Options);
 };
 
 } // end namespace llvm

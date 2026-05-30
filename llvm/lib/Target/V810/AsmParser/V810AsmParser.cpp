@@ -55,9 +55,8 @@ class V810AsmParser : public MCTargetAsmParser {
 
 public:
   V810AsmParser(const MCSubtargetInfo &sti, MCAsmParser &parser,
-                const MCInstrInfo &MII,
-                const MCTargetOptions &Options)
-      : MCTargetAsmParser(Options, sti, MII), Parser(parser) {
+                const MCInstrInfo &MII)
+      : MCTargetAsmParser(sti, MII), Parser(parser) {
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(getSTI().getFeatureBits()));

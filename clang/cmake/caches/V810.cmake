@@ -33,6 +33,9 @@ set(CMAKE_BUILD_TYPE Release CACHE STRING "CMake build type")
 # disable lldb testing until the lldb tests stabilize
 set(LLDB_INCLUDE_TESTS OFF CACHE BOOL "Include lldb tests")
 
+# enabling python support in LLDB is a nuisance, b/c users need specific python versions
+set(LLDB_ENABLE_PYTHON OFF CACHE BOOL "")
+
 # Ship the release with these tools
 set(LLVM_INSTALL_TOOLCHAIN_ONLY ON CACHE BOOL "")
 set(LLVM_TOOLCHAIN_TOOLS

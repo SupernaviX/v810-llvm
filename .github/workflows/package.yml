@@ -9,7 +9,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-2022, macos-latest, ubuntu-22.04]
+        os: [windows-2022, macos-latest, ubuntu-24.04]
     steps:
       - name: Setup Windows
         if: startsWith(matrix.os, 'windows')
@@ -87,7 +87,7 @@ jobs:
           path: llvm-v810-*-${{ github.head_ref || github.ref_name }}.*
 
   release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: package
     steps:
       - id: getDate
@@ -105,7 +105,7 @@ jobs:
       - name: Download Linux artifacts
         uses: actions/download-artifact@v5
         with:
-          name: ubuntu-22.04
+          name: ubuntu-24.04
       - name: Release
         uses: softprops/action-gh-release@v1
         if: (github.head_ref || github.ref_name) == 'main'

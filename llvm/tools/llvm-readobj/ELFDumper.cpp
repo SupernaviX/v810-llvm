@@ -1456,8 +1456,8 @@ getSectionFlagsForTarget(unsigned EOSAbi, unsigned EMachine) {
       Ret.push_back(&Entry);
     break;
   case EM_V810:
-    Ret.insert(Ret.end(), std::begin(ElfV810SectionFlags),
-               std::end(ElfV810SectionFlags));
+    for (const auto &Entry : EnumStrings(ElfV810SectionFlags))
+      Ret.push_back(&Entry);
     break;
   case EM_X86_64:
     for (const auto &Entry : EnumStrings(ElfX86_64SectionFlags))

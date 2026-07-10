@@ -44,10 +44,6 @@ V810TargetMachine::getSubtargetImpl(const Function &F) const {
       FSAttr.isValid() ? FSAttr.getValueAsString().str() : TargetFS;
   auto &I = SubtargetMap[CPU + FS];
   if (!I) {
-    // This needs to be done before we create a new subtarget since any
-    // creation will depend on the TM and the code generation flags on the
-    // function that reside in TargetOptions.
-    resetTargetOptions(F);
     I = std::make_unique<V810Subtarget>(TargetTriple, CPU, FS, *this);
   }
   return I.get();

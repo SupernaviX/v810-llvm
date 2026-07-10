@@ -34,7 +34,7 @@ void f_allregs(struct ConvenientSize fitsparam) {}
 // more than that? doesn't fit
 
 // CHECK-LABEL: define dso_local void @f_too_big
-// CHECK-SAME: (ptr noundef readnone byval([[STRUCT_INCONVENIENTSIZE:%.*]]) align 4 captures(none) [[UNFITSPARAM:%.*]]) local_unnamed_addr #[[ATTR0]] {
+// CHECK-SAME: (ptr nofree noundef readnone byval([[STRUCT_INCONVENIENTSIZE:%.*]]) align 4 captures(none) [[UNFITSPARAM:%.*]]) local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret void
 //
@@ -80,7 +80,7 @@ struct ThreeRegisters {
 };
 
 // CHECK-LABEL: define dso_local void @f_returninsret
-// CHECK-SAME: (ptr dead_on_unwind noalias writable writeonly sret([[STRUCT_THREEREGISTERS:%.*]]) align 4 captures(none) initializes((0, 12)) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR2:[0-9]+]] {
+// CHECK-SAME: (ptr dead_on_unwind noalias nofree writable writeonly sret([[STRUCT_THREEREGISTERS:%.*]]) align 4 captures(none) initializes((0, 12)) [[AGG_RESULT:%.*]]) local_unnamed_addr #[[ATTR2:[0-9]+]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    tail call void @llvm.memset.p0.i32(ptr noundef nonnull align 4 dereferenceable(12) [[AGG_RESULT]], i8 0, i32 12, i1 false)
 // CHECK-NEXT:    ret void

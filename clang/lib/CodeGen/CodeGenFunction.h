@@ -2962,10 +2962,11 @@ public:
   /// aggregate type.
   AggValueSlot CreateAggTemp(QualType T, const Twine &Name = "tmp",
                              RawAddress *Alloca = nullptr) {
+    RawAddress Addr = CreateMemTemp(T, Name, Alloca);
     return AggValueSlot::forAddr(
-        CreateMemTemp(T.getUnqualifiedType(), Name, Alloca), T.getQualifiers(),
-        AggValueSlot::IsNotDestructed, AggValueSlot::DoesNotNeedGCBarriers,
-        AggValueSlot::IsNotAliased, AggValueSlot::DoesNotOverlap);
+        Addr, T.getQualifiers(), AggValueSlot::IsNotDestructed,
+        AggValueSlot::DoesNotNeedGCBarriers, AggValueSlot::IsNotAliased,
+        AggValueSlot::DoesNotOverlap);
   }
 
   /// EvaluateExprAsBool - Perform the usual unary conversions on the specified
@@ -3009,6 +3010,11 @@ public:
   /// always the value of the expression, because a __builtin_ms_va_list is a
   /// pointer to a char.
   Address EmitMSVAListRef(const Expr *E);
+
+  /// Emit a "reference" to a __builtin_zos_va_list; this is always the
+  /// address of the expression, because a __builtin_zos_va_list is an
+  /// array of pointer to a char.
+  Address EmitZOSVAListRef(const Expr *E);
 
   /// EmitAnyExprToTemp - Similarly to EmitAnyExpr(), however, the result will
   /// always be accessible even if no aggregate location is provided.
@@ -4876,7 +4882,6 @@ public:
   llvm::Value *EmitSVETupleCreate(const SVETypeFlags &TypeFlags,
                                   llvm::Type *ReturnType,
                                   ArrayRef<llvm::Value *> Ops);
-  llvm::Value *EmitSVEAllTruePred(const SVETypeFlags &TypeFlags);
   llvm::Value *EmitSVEDupX(llvm::Value *Scalar);
   llvm::Value *EmitSVEDupX(llvm::Value *Scalar, llvm::Type *Ty);
   llvm::Value *EmitSVEReinterpret(llvm::Value *Val, llvm::Type *Ty);
@@ -4962,6 +4967,7 @@ public:
   llvm::Value *EmitWebAssemblyBuiltinExpr(unsigned BuiltinID,
                                           const CallExpr *E);
   llvm::Value *EmitHexagonBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
+  llvm::Value *EmitAVRBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   llvm::Value *EmitRISCVBuiltinExpr(unsigned BuiltinID, const CallExpr *E,
                                     ReturnValueSlot ReturnValue);
 

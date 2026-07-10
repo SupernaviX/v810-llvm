@@ -29,6 +29,7 @@ namespace {
   };
 }
 
+#define GET_CALLING_CONV_IMPL
 #include "V810GenCallingConv.inc"
 
 V810TargetLowering::V810TargetLowering(const TargetMachine &TM,

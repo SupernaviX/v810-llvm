@@ -71,7 +71,7 @@ public:
 
   void fillValidCPUList(SmallVectorImpl<StringRef> &Values) const override;
 
-  bool setCPU(const std::string &Name) override {
+  bool setCPU(StringRef Name) override {
     CPU = getCPUKind(Name);
     return CPU != CK_GENERIC;
   }

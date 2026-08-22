@@ -83,6 +83,8 @@ def IsSPARC32 : LibcallPredicate<[{TT.isSPARC32()}]>;
 def IsSPARC64 : LibcallPredicate<[{TT.isSPARC64()}]>;
 def IsSPIRV : LibcallPredicate<[{TT.isSPIRV()}]>;
 
+def IsNEC : LibcallPredicate<[{TT.isNEC()}]>;
+
 def IsX86_32 : LibcallPredicate<[{TT.getArch() == Triple::x86}]>;
 def IsX86_64 : LibcallPredicate<[{TT.getArch() == Triple::x86_64}]>;
 def IsX86 : LibcallPredicate<[{TT.isX86()}]>;
@@ -3377,7 +3379,7 @@ def SPIRVSystemLibrary : SystemRuntimeLibrary<isSPIRV, (add memset, memcpy)>;
 // V810/V830 Runtime Libcalls
 //===----------------------------------------------------------------------===//
 
-def isNEC : RuntimeLibcallPredicate<"TT.isNEC()">;
+def isNEC : RuntimeLibcallAvailability<(all_of IsNEC)>;
 
 def __memcpy_wordaligned : RuntimeLibcallImpl<MEMCPY_WORDALIGNED>;
 

@@ -487,7 +487,7 @@ def TargetAnyMips : TargetArch<["mips", "mipsel", "mips64", "mips64el"]>;
 def TargetMSP430 : TargetArch<["msp430"]>;
 def TargetM68k : TargetArch<["m68k"]>;
 def TargetRISCV : TargetArch<["riscv32", "riscv64", "riscv32be", "riscv64be"]>;
-def TargetV810 : TargetArch<["v810"]>;
+def TargetV810 : TargetArch<["v810", "v830"]>;
 def TargetX86 : TargetArch<["x86"]>;
 def TargetX86_64 : TargetArch<["x86_64"]>;
 def TargetAnyX86 : TargetArch<["x86", "x86_64"]>;

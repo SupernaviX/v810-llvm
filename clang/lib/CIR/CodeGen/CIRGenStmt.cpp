@@ -141,7 +141,7 @@ CIRGenFunction::emitAttributedStmt(const AttributedStmt &s) {
 
   SaveAndRestore save_musttail(mustTailCall, musttail);
 
-  return emitStmt(s.getSubStmt(), /*useCurrentScope=*/true, s.getAttrs());
+  return emitStmt(s.getSubStmt(), /*useCurrentScope=*/false, s.getAttrs());
 }
 
 mlir::LogicalResult CIRGenFunction::emitCompoundStmt(const CompoundStmt &s,
@@ -441,6 +441,8 @@ mlir::LogicalResult CIRGenFunction::emitStmt(const Stmt *s,
     return emitOMPSplitDirective(cast<OMPSplitDirective>(*s));
   case Stmt::OMPInterchangeDirectiveClass:
     return emitOMPInterchangeDirective(cast<OMPInterchangeDirective>(*s));
+  case Stmt::OMPFlattenDirectiveClass:
+    return emitOMPFlattenDirective(cast<OMPFlattenDirective>(*s));
   case Stmt::OMPAssumeDirectiveClass:
     return emitOMPAssumeDirective(cast<OMPAssumeDirective>(*s));
   case Stmt::OMPMaskedDirectiveClass:
@@ -522,7 +524,7 @@ mlir::LogicalResult CIRGenFunction::emitLabelStmt(const clang::LabelStmt &s) {
   if (getContext().getLangOpts().EHAsynch && s.isSideEntry())
     getCIRGenModule().errorNYI(s.getSourceRange(), "IsEHa: not implemented.");
 
-  return emitStmt(s.getSubStmt(), /*useCurrentScope*/ true);
+  return emitStmt(s.getSubStmt(), /*useCurrentScope=*/false);
 }
 
 // Add a terminating yield on a body region if no other terminators are used.
@@ -1021,15 +1023,15 @@ mlir::LogicalResult CIRGenFunction::emitForStmt(const ForStmt &s) {
         return mlir::failure();
     assert(!cir::MissingFeatures::loopInfoStack());
 
-    // If the condition variable has a non-trivial destructor, its lifetime is
-    // a single iteration, so capture its cleanup and emit it into the loop's
+    // A condition variable's lifetime is a single iteration, so capture its
+    // destructor and lifetime-end cleanups and emit them into the loop's
     // per-iteration cleanup region. This scope is constructed after the
-    // init-statement so its cleanups are not captured.
+    // init-statement so the init-statement's cleanups are not captured.
     const VarDecl *condVar = s.getConditionVariable();
     bool needsCondCleanup =
-        condVar && condVar->needsDestruction(getContext()) != QualType::DK_none;
-    // We will also need cleanup if lifetime markers are enabled.
-    assert(!cir::MissingFeatures::emitLifetimeMarkers());
+        condVar &&
+        (condVar->needsDestruction(getContext()) != QualType::DK_none ||
+         shouldEmitLifetimeMarkersForAutoVar());
     DeferredLoopConditionCleanup loopCondScope(*this, needsCondCleanup);
 
     auto condBuilder = [&](mlir::OpBuilder &b, mlir::Location loc) {
@@ -1154,14 +1156,14 @@ mlir::LogicalResult CIRGenFunction::emitWhileStmt(const WhileStmt &s) {
     mlir::LogicalResult loopRes = mlir::success();
     assert(!cir::MissingFeatures::loopInfoStack());
 
-    // If the condition variable has a non-trivial destructor, its lifetime is
-    // a single iteration, so capture its cleanup and emit it into the loop's
+    // A condition variable's lifetime is a single iteration, so capture its
+    // destructor and lifetime-end cleanups and emit them into the loop's
     // per-iteration cleanup region.
     const VarDecl *condVar = s.getConditionVariable();
     bool needsCondCleanup =
-        condVar && condVar->needsDestruction(getContext()) != QualType::DK_none;
-    // We will also need cleanup if lifetime markers are enabled.
-    assert(!cir::MissingFeatures::emitLifetimeMarkers());
+        condVar &&
+        (condVar->needsDestruction(getContext()) != QualType::DK_none ||
+         shouldEmitLifetimeMarkersForAutoVar());
     DeferredLoopConditionCleanup loopCondScope(*this, needsCondCleanup);
 
     auto condBuilder = [&](mlir::OpBuilder &b, mlir::Location loc) {

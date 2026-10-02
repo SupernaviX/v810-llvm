@@ -25,7 +25,7 @@ V810TargetMachine::V810TargetMachine(
     const TargetOptions &Options, std::optional<Reloc::Model> RM,
     std::optional<CodeModel::Model> CM, CodeGenOptLevel OL, bool JIT)
     : CodeGenTargetMachineImpl(
-        T, computeDataLayout(TT), TT, CPU, FS, Options,
+        T, TT, CPU, FS, Options,
         RM.value_or(Reloc::Static),
         CM.value_or(CodeModel::Small),
         OL),

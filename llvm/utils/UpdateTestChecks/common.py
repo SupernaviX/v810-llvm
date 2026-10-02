@@ -647,6 +647,8 @@ SEPARATOR = "."
 METADATA_NODES_RE = re.compile(r"^\s*!(\d+)\s*=\s*!\{(.*)\}", re.M)
 TBAA_TAGS_RE = re.compile(r"!tbaa\s*!([0-9]+)")
 
+MULTIPLE_BRACES_RE = re.compile(r"{{+|\[\[+")
+
 
 def error(msg, test_file=None):
     if test_file:
@@ -1005,6 +1007,14 @@ class FunctionTestBuilder:
         """
         Returns the number of functions processed from the output by the regex.
         """
+
+        def escape_braces(match_obj):
+            return "{{" + re.escape(match_obj.group(0)) + "}}"
+
+        # Escape multiple {{ or [[ as {{}} and [[]] have special meaning in
+        # FileCheck.
+        raw_tool_output = MULTIPLE_BRACES_RE.sub(escape_braces, raw_tool_output)
+
         build_global_values_dictionary(
             self._global_var_dict, raw_tool_output, prefixes, self._ginfo
         )
@@ -1204,6 +1214,8 @@ class NamelessValue:
     def get_value_name(self, var: str, check_prefix: str):
         var = var.replace("!", "")
         var = var.replace("%", "")
+        if var.startswith("."):
+            var = var.replace(".", "dot", 1)
         if self.replace_number_with_counter:
             assert var
             replacement = self.variable_mapping.get(var, None)
@@ -1920,15 +1932,8 @@ def generalize_check_lines(
     else:
         regexp = ginfo.get_regexp()
 
-    multiple_braces_re = re.compile(r"({{+)|(}}+)")
-
-    def escape_braces(match_obj):
-        return "{{" + re.escape(match_obj.group(0)) + "}}"
-
     if ginfo.is_ir():
         for i, line in enumerate(lines):
-            # An IR variable named '%.' matches the FileCheck regex string.
-            line = line.replace("%.", "%dot")
             for regex in _global_hex_value_regex:
                 if re.match("^@" + regex + " = ", line):
                     line = re.sub(
@@ -2102,12 +2107,6 @@ def generalize_check_lines(
             line += line_template
 
             lines[i] = line
-
-    if ginfo.is_analyze():
-        for i, _ in enumerate(lines):
-            # Escape multiple {{ or }} as {{}} denotes a FileCheck regex.
-            scrubbed_line = multiple_braces_re.sub(escape_braces, lines[i])
-            lines[i] = scrubbed_line
 
     return lines
 

@@ -58,7 +58,7 @@ struct TwoRegisters {
     int32_t reg2;
 };
 
-// CHECK-LABEL: define dso_local %struct.TwoRegisters @f_returninregs
+// CHECK-LABEL: define dso_local noundef %struct.TwoRegisters @f_returninregs
 // CHECK-SAME: () local_unnamed_addr #[[ATTR0]] {
 // CHECK-NEXT:  entry:
 // CHECK-NEXT:    ret [[STRUCT_TWOREGISTERS:%.*]] zeroinitializer

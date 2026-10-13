@@ -385,7 +385,7 @@ bool M68kInstrInfo::ExpandMOVI(MachineInstrBuilder &MIB, MVT MVTSize) const {
 
   if (Imm == 0) {
     buildClearRegister(Reg, MBB, MIB, DL);
-    MachineInstr &NewMI = *std::prev((MachineBasicBlock::iterator)static_cast<MachineInstrBuilder>(MIB));
+    MachineInstr &NewMI = *std::prev(MIB.getIter());
     LLVM_DEBUG(dbgs() << NewMI << "\n");
     MIB->removeFromParent();
 

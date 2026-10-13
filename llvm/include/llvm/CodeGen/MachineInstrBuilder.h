@@ -190,6 +190,8 @@ public:
   /// explicitly.
   MachineInstr *getInstr() const { return MI; }
 
+  MachineBasicBlock::iterator getIter() const { return MI; }
+
   /// Get the register for the operand index.
   /// The operand at the index should be a register (asserted by
   /// MachineOperand).

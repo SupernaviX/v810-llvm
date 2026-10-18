@@ -425,7 +425,8 @@ V810AsmParser::parseMEMOperand(OperandVector &Operands) {
     if (getParser().parseExpression(EVal, E))
       return ParseStatus::Failure;
   }
-  Lex(); // eat the [
+  if (getParser().parseToken(AsmToken::LBrac))
+    return ParseStatus::Failure;
 
   // parse the register
   MCRegister Reg;
@@ -434,9 +435,8 @@ V810AsmParser::parseMEMOperand(OperandVector &Operands) {
 
   // eat the ]
   E = getTok().getEndLoc();
-  if (!getLexer().is(AsmToken::RBrac))
+  if (getParser().parseToken(AsmToken::RBrac))
     return ParseStatus::Failure;
-  Lex();
 
   Operands.push_back(V810Operand::CreateMEMri(Reg, EVal, S, E));
 
@@ -477,29 +477,39 @@ V810AsmParser::parseCondOperand(OperandVector &Operands) {
   SMLoc S = getTok().getLoc();
   SMLoc E = getTok().getEndLoc();
 
-  if (getTok().isNot(AsmToken::Identifier))
+  unsigned Val = -1u;
+  if (getTok().is(AsmToken::Integer)) {
+    int64_t FullVal = getTok().getIntVal();
+    if (FullVal >= 0 && FullVal < 16)
+      Val = (unsigned)FullVal;
+  } else if (getTok().is(AsmToken::Identifier)) {
+    Val = llvm::StringSwitch<unsigned>(getTok().getString())
+      .CaseLower("v", V810CC::CC_V)
+      .CasesLower({"c", "l"}, V810CC::CC_C)
+      .CasesLower({"e", "z"}, V810CC::CC_E)
+      .CaseLower("nh", V810CC::CC_NH)
+      .CaseLower("n", V810CC::CC_N)
+      .CaseLower("t", V810CC::CC_BR)
+      .CaseLower("lt", V810CC::CC_LT)
+      .CaseLower("le", V810CC::CC_LE)
+      .CaseLower("nv", V810CC::CC_NV)
+      .CasesLower({"nc", "nl"}, V810CC::CC_NC)
+      .CasesLower({"ne", "nz"}, V810CC::CC_NE)
+      .CaseLower("h", V810CC::CC_H)
+      .CaseLower("p", V810CC::CC_P)
+      .CaseLower("f", V810CC::CC_NOP)
+      .CaseLower("ge", V810CC::CC_GE)
+      .CaseLower("gt", V810CC::CC_GT)
+      .Default(-1u);
+  } else {
+    Error(S, "condition code expected");
     return ParseStatus::Failure;
+  }
 
-  unsigned Val = llvm::StringSwitch<unsigned>(getTok().getString())
-    .CaseLower("v", V810CC::CC_V)
-    .CasesLower({"c", "l"}, V810CC::CC_C)
-    .CasesLower({"e", "z"}, V810CC::CC_E)
-    .CaseLower("nh", V810CC::CC_NH)
-    .CaseLower("n", V810CC::CC_N)
-    .CaseLower("t", V810CC::CC_BR)
-    .CaseLower("lt", V810CC::CC_LT)
-    .CaseLower("le", V810CC::CC_LE)
-    .CaseLower("nv", V810CC::CC_NV)
-    .CasesLower({"nc", "nl"}, V810CC::CC_NC)
-    .CasesLower({"ne", "nz"}, V810CC::CC_NE)
-    .CaseLower("h", V810CC::CC_H)
-    .CaseLower("p", V810CC::CC_P)
-    .CaseLower("f", V810CC::CC_NOP)
-    .CaseLower("ge", V810CC::CC_GE)
-    .CaseLower("gt", V810CC::CC_GT)
-    .Default(-1u);
-  if (Val == -1u)
+  if (Val == -1u) {
+    Error(S, "unrecognized condition code");
     return ParseStatus::Failure;
+  }
   Lex();
   
   const MCExpr *Expr = MCConstantExpr::create(Val, getContext());

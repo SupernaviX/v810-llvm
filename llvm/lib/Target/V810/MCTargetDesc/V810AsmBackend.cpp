@@ -37,9 +37,9 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   case FK_Data_4:
     return Value;
   case V810::fixup_v810_lo:
-    return xh(EvalLo(Value));
+    return EvalLo(Value);
   case V810::fixup_v810_hi:
-    return xh(EvalHi(Value));
+    return EvalHi(Value);
   case V810::fixup_v810_sdaoff:
     return 0; // can't compute this here
   case V810::fixup_v810_9_pcrel:

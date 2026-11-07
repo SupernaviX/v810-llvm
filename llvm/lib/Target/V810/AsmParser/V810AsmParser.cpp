@@ -46,6 +46,8 @@ class V810AsmParser : public MCTargetAsmParser {
   ParseStatus parseBcondTargetOperand(OperandVector &Operands);
   ParseStatus parseJumpTargetOperand(OperandVector &Operands, V810MCExpr::Specifier S);
   ParseStatus parseCondOperand(OperandVector &Operands);
+  template<unsigned N>
+  ParseStatus parseImmOperand(OperandVector &Operands);
 
   ParseStatus MatchOperandParserCustomImpl(OperandVector &Operands, StringRef Mnemonic);
   ParseStatus parseOperand(OperandVector &Operands, StringRef Name);
@@ -129,6 +131,8 @@ public:
       return 0 <= CE->getValue() && CE->getValue() < 16;
     return false;
   }
+  bool isImm5() const { return isImm(); }
+  bool isImm16() const { return isImm(); }
 
   MCRegister getReg() const override {
     assert((Kind == k_Register) && "Invalid access!");
@@ -213,6 +217,18 @@ public:
   }
 
   void addCondOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    addExpr(Inst, getImm());
+  }
+
+  void addImm5Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    addExpr(Inst, getImm());
+  }
+
+  void addImm16Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
 
     addExpr(Inst, getImm());
@@ -517,6 +533,33 @@ V810AsmParser::parseCondOperand(OperandVector &Operands) {
   return ParseStatus::Success;
 }
 
+// an immediate, but emitting a warning if the size is wrong
+template<unsigned N>
+ParseStatus
+V810AsmParser::parseImmOperand(OperandVector &Operands) {
+  SMLoc Start = getLexer().getLoc();
+
+  std::unique_ptr<V810Operand> Op;
+  ParseStatus ResTy = parseV810AsmOperand(Op);
+  if (!ResTy.isSuccess() || !Op) {
+    SMLoc Loc = getLexer().getLoc();
+    return Error(Loc, "unexpected token");
+  }
+
+  if (Op->isImm()) {
+    const MCExpr *Expr = Op->getImm();
+    int64_t Val;
+    if (Expr->evaluateAsAbsolute(Val) && !isInt<N>(Val) && !isUInt<N>((uint64_t) Val)) {
+      bool Fatal = Warning(Start, "immediate out of range, must be between " + Twine(minIntN(N)) + " and " + Twine(maxUIntN(N)));
+      if (Fatal) return ParseStatus::Failure;
+    }
+  }
+  
+  Operands.push_back(std::move(Op));
+
+  return ParseStatus::Success;
+}
+
 // We need some slightly unusual logic to parse registers, and that seems hard to express in tablegen.
 // so, handle them here.
 ParseStatus
@@ -583,7 +626,6 @@ V810AsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
   if (!ResTy.isSuccess() || !Op) {
     SMLoc Loc = getLexer().getLoc();
     return Error(Loc, "unexpected token");
-    return ParseStatus::Failure;
   }
   
   Operands.push_back(std::move(Op));

@@ -49,10 +49,32 @@ def V810CondAsmOperand : AsmOperandClass {
   let ParserMethod = "parseCondOperand";
 }
 
-def uimm5Op : Operand<i32> { let DecoderMethod = "DecodeUIMM<5>"; }
-def simm5Op : Operand<i32> { let DecoderMethod = "DecodeSIMM<5>"; }
-def uimm16Op : Operand<i32> { let DecoderMethod = "DecodeUIMM<16>"; }
-def simm16Op : Operand<i32> { let DecoderMethod = "DecodeSIMM<16>"; }
+def V810Imm5AsmOperand : AsmOperandClass {
+  let Name = "Imm5";
+  let ParserMethod = "parseImmOperand<5>";
+}
+
+def V810Imm16AsmOperand : AsmOperandClass {
+  let Name = "Imm16";
+  let ParserMethod = "parseImmOperand<16>";
+}
+
+def uimm5Op : Operand<i32> {
+  let DecoderMethod = "DecodeUIMM<5>";
+  let ParserMatchClass = V810Imm5AsmOperand;
+}
+def simm5Op : Operand<i32> {
+  let DecoderMethod = "DecodeSIMM<5>";
+  let ParserMatchClass = V810Imm5AsmOperand;
+}
+def uimm16Op : Operand<i32> {
+  let DecoderMethod = "DecodeUIMM<16>";
+  let ParserMatchClass = V810Imm16AsmOperand;
+}
+def simm16Op : Operand<i32> {
+  let DecoderMethod = "DecodeSIMM<16>";
+  let ParserMatchClass = V810Imm16AsmOperand;
+}
 
 def MEMri : Operand<iPTR> {
   let PrintMethod = "printMemOperand";

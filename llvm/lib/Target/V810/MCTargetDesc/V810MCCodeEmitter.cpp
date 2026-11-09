@@ -107,7 +107,7 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   if (Expr->evaluateAsAbsolute(Res))
     return Res;
 
-  llvm_unreachable("Unhandled expression!");
+  addFixup(Fixups, 0, Expr, FK_Data_4);
   return 0;
 }
 

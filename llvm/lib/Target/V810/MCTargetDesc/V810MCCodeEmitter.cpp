@@ -107,7 +107,7 @@ getMachineOpValue(const MCInst &MI, const MCOperand &MO,
   if (Expr->evaluateAsAbsolute(Res))
     return Res;
 
-  addFixup(Fixups, 0, Expr, FK_Data_4);
+  addFixup(Fixups, 0, Expr, FK_Data_2);
   return 0;
 }
 

@@ -68,17 +68,17 @@ void V810::relocate(uint8_t *loc, const Relocation &rel,
   case R_V810_32:
   case R_V810_DISP32:
     checkInt(ctx, loc, val, 32, rel);
-    write32le(loc, val & 0xffffffff);
+    write32vb(loc, val & 0xffffffff);
     break;
   case R_V810_16:
   case R_V810_DISP16:
     checkInt(ctx, loc, val, 16, rel);
-    write16le(loc, val & 0x0000ffff);
+    write16le(loc + 2, val & 0x0000ffff);
     break;
   case R_V810_8:
   case R_V810_DISP8:
     checkInt(ctx, loc, val, 8, rel);
-    *loc = val & 0x000000ff;
+    *(loc + 2) = val & 0x000000ff;
     break;
   case R_V810_LO:
     checkInt(ctx, loc, val, 32, rel);

@@ -26,6 +26,7 @@ enum {
   S_V810_NONE = MCSymbolRefExpr::FirstTargetSpecifier,
   S_V810_LO,
   S_V810_HI,
+  S_V810_16,
   S_V810_SDAOFF,
   S_V810_9_PCREL,
   S_V810_26_PCREL

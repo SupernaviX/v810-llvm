@@ -45,6 +45,7 @@ unsigned V810ObjectWriter::getRelocType(const MCFixup &Fixup,
   case FK_Data_1:                 return ELF::R_V810_8;
   case FK_Data_2:                 return ELF::R_V810_16;
   case FK_Data_4:                 return ELF::R_V810_32;
+  case V810::fixup_v810_16:       return ELF::R_V810_16;
   case V810::fixup_v810_lo:       return ELF::R_V810_LO;
   case V810::fixup_v810_hi:       return ELF::R_V810_HI_S;
   case V810::fixup_v810_sdaoff:   return ELF::R_V810_SDAOFF;

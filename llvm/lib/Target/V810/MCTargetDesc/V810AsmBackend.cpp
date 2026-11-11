@@ -19,6 +19,15 @@ static uint64_t xh(uint64_t value) {
 }
 
 template <unsigned N>
+static void checkValueInRange(const MCFixup &Fixup, int64_t Value,
+                              MCContext &Ctx) {
+  if (isInt<N>(Value) || isUInt<N>(Value)) return;
+  Ctx.reportError(Fixup.getLoc(),
+    Twine("value ") + Twine(Value) + " out of range [" +
+    Twine(minIntN(N)) + ", " + Twine(maxUIntN((uint64_t)N)) + "]");
+}
+
+template <unsigned N>
 static void checkOffsetInRange(const MCFixup &Fixup, int64_t Value,
                                MCContext &Ctx) {
   if (isInt<N>(Value)) return;
@@ -40,6 +49,9 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
     return EvalLo(Value);
   case V810::fixup_v810_hi:
     return EvalHi(Value);
+  case V810::fixup_v810_16:
+    checkValueInRange<16>(Fixup, Value, Ctx);
+    return Value & 0xffff;
   case V810::fixup_v810_sdaoff:
     return 0; // can't compute this here
   case V810::fixup_v810_9_pcrel:
@@ -83,6 +95,7 @@ namespace {
         // name                  offset bits  flags
         { "fixup_v810_lo",       16,    16,   0 },
         { "fixup_v810_hi",       16,    16,   0 },
+        { "fixup_v810_16",       16,    16,   0 },
         { "fixup_v810_sdaoff",   16,    16,   0 },
         { "fixup_v810_9_pcrel",  0,     16,   0 },
         { "fixup_v810_26_pcrel", 0,     32,   0 }

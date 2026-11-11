@@ -7,6 +7,7 @@
     movea lo(0x00100020), r8, r8
     movhi hi(address_ - address), r0, r9
     movea lo(address_ - address), r9, r9
+    movea address_ - address, r0, r10
     jr address_
 address:
     .ascii "abcd"
@@ -16,4 +17,5 @@ address_:
 # CHECK: movea 0x20, r8, r8
 # CHECK: movhi 0x0, r0, r9
 # CHECK: movea 0x4, r9, r9
-# CHECK: jr 0x18
+# CHECK: movea 0x4, r0, r10
+# CHECK: jr 0x1c

@@ -549,9 +549,14 @@ V810AsmParser::parseImmOperand(OperandVector &Operands) {
   if (Op->isImm()) {
     const MCExpr *Expr = Op->getImm();
     int64_t Val;
-    if (Expr->evaluateAsAbsolute(Val) && !isInt<N>(Val) && !isUInt<N>((uint64_t) Val)) {
-      bool Fatal = Warning(Start, "immediate out of range, must be between " + Twine(minIntN(N)) + " and " + Twine(maxUIntN(N)));
-      if (Fatal) return ParseStatus::Failure;
+    if (Expr->evaluateAsAbsolute(Val)) {
+      if (!isInt<N>(Val) && !isUInt<N>((uint64_t) Val)) {
+        bool Fatal = Warning(Start, "immediate out of range, must be between " + Twine(minIntN(N)) + " and " + Twine(maxUIntN(N)));
+        if (Fatal) return ParseStatus::Failure;
+      }
+    } else if (N == 16 && !isa<V810MCExpr>(Expr)) {
+      const MCExpr *VExpr = V810MCExpr::create(V810::S_V810_16, Expr, getContext());
+      Op = V810Operand::CreateImm(VExpr, Op->getStartLoc(), Op->getEndLoc());
     }
   }
   

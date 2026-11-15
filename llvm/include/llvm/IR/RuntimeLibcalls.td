@@ -3809,11 +3809,15 @@ def SPIRVSystemLibrary : SystemRuntimeLibrary<isSPIRV, ["libc"]>;
 // V810/V830 Runtime Libcalls
 //===----------------------------------------------------------------------===//
 
+defset list<RuntimeLibcallImpl> NECLibcalls = {
+def __memcpy_wordaligned : RuntimeLibcallImpl<MEMCPY_WORDALIGNED>;
+}
+
 def isNEC : RuntimeLibcallAvailability<(all_of IsNEC)>;
 
-def __memcpy_wordaligned : RuntimeLibcallImpl<MEMCPY_WORDALIGNED>;
+def NECCompilerRt : LibcallLibrary<"compiler-rt", (add NECLibcalls), isNEC>;
 
-def NECSystemLibrary : SystemRuntimeLibrary<isNEC, (add DefaultLibcallImpls32, memcpy, memset, __memcpy_wordaligned)>;
+def NECSystemLibrary : SystemRuntimeLibrary<isNEC, ["compiler-rt", "libm", "libc", "unwind"]>;
 
 //===----------------------------------------------------------------------===//
 // Windows Runtime Libcalls

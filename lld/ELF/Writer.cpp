@@ -139,7 +139,7 @@ static Defined *addOptionalRegular(Ctx &ctx, StringRef name, SectionBase *sec,
 }
 
 static Defined *addAbsoluteWithValue(Ctx &ctx, StringRef name, uint64_t value) {
-  Symbol *sym = ctx.symtab->addSymbol(Defined{ctx, nullptr, name, STB_GLOBAL, STV_HIDDEN,
+  Symbol *sym = ctx.symtab->addSymbol(Defined{nullptr, name, STB_GLOBAL, STV_HIDDEN,
                                          STT_NOTYPE, value, 0, nullptr});
   sym->isUsedInRegularObj = true;
   return cast<Defined>(sym);

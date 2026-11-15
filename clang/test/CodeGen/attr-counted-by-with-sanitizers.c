@@ -899,7 +899,7 @@ int test_compound_literal(int idx) {
 // SANITIZE-WITH-ATTR-NEXT:  [[ENTRY:.*:]]
 // SANITIZE-WITH-ATTR-NEXT:    [[FOO:%.*]] = alloca [[STRUCT_ANON_6:%.*]], align 4
 // SANITIZE-WITH-ATTR-NEXT:    call void @llvm.lifetime.start.p0(ptr nonnull [[FOO]])
-// SANITIZE-WITH-ATTR-NEXT:    store i64 8589934593, ptr [[FOO]], align 4
+// SANITIZE-WITH-ATTR-NEXT:    call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 4 dereferenceable(8) [[FOO]], ptr noundef nonnull align 4 dereferenceable(8) @__const.test_compound_literal_local_decl.foo, i64 8, i1 false)
 // SANITIZE-WITH-ATTR-NEXT:    [[TMP0:%.*]] = icmp eq i32 [[IDX]], 0
 // SANITIZE-WITH-ATTR-NEXT:    br i1 [[TMP0]], label %[[HANDLER_TYPE_MISMATCH:.*]], label %[[HANDLER_OUT_OF_BOUNDS:.*]], !prof [[PROF7]], !nosanitize [[META6]]
 // SANITIZE-WITH-ATTR:       [[HANDLER_OUT_OF_BOUNDS]]:
@@ -917,7 +917,7 @@ int test_compound_literal(int idx) {
 // SANITIZE-WITHOUT-ATTR-NEXT:  [[ENTRY:.*:]]
 // SANITIZE-WITHOUT-ATTR-NEXT:    [[FOO:%.*]] = alloca [[STRUCT_ANON_6:%.*]], align 4
 // SANITIZE-WITHOUT-ATTR-NEXT:    call void @llvm.lifetime.start.p0(ptr nonnull [[FOO]])
-// SANITIZE-WITHOUT-ATTR-NEXT:    store i64 8589934593, ptr [[FOO]], align 4
+// SANITIZE-WITHOUT-ATTR-NEXT:    call void @llvm.memcpy.p0.p0.i64(ptr noundef nonnull align 4 dereferenceable(8) [[FOO]], ptr noundef nonnull align 4 dereferenceable(8) @__const.test_compound_literal_local_decl.foo, i64 8, i1 false)
 // SANITIZE-WITHOUT-ATTR-NEXT:    [[TMP0:%.*]] = icmp eq i32 [[IDX]], 0
 // SANITIZE-WITHOUT-ATTR-NEXT:    br i1 [[TMP0]], label %[[HANDLER_TYPE_MISMATCH:.*]], label %[[HANDLER_OUT_OF_BOUNDS:.*]], !prof [[PROF10]], !nosanitize [[META9]]
 // SANITIZE-WITHOUT-ATTR:       [[HANDLER_OUT_OF_BOUNDS]]:

@@ -100,8 +100,7 @@ class V810InstrInfo : public V810GenInstrInfo {
                            unsigned NumBytes) const override;
   bool getMemOperandsWithOffsetWidth(
       const MachineInstr &MI, SmallVectorImpl<const MachineOperand *> &BaseOps,
-      int64_t &Offset, bool &OffsetIsScalable, LocationSize &Width,
-      const TargetRegisterInfo *TRI) const override;
+      int64_t &Offset, bool &OffsetIsScalable, LocationSize &Width) const override;
 
   bool isUnpredicatedTerminatorBesidesNop(const MachineInstr &MI) const;
 

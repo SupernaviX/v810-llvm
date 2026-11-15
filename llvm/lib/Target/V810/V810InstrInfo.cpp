@@ -460,8 +460,7 @@ bool V810InstrInfo::shouldClusterMemOps(
 
 bool V810InstrInfo::getMemOperandsWithOffsetWidth(
     const MachineInstr &MI, SmallVectorImpl<const MachineOperand *> &BaseOps,
-    int64_t &Offset, bool &OffsetIsScalable, LocationSize &Width,
-    const TargetRegisterInfo *TRI) const {
+    int64_t &Offset, bool &OffsetIsScalable, LocationSize &Width) const {
   OffsetIsScalable = false;
   switch (MI.getOpcode()) {
   case V810::IN_B:

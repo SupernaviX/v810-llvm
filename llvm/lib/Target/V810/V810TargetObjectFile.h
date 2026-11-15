@@ -11,7 +11,8 @@ class TargetMachine;
 
 class V810TargetObjectFile : public TargetLoweringObjectFileELF {
 public:
-  void Initialize(MCContext &Ctx, const TargetMachine &TM) override;
+  void initialize(MCContext &Ctx, const TargetMachine &TM,
+                  const Module &M) override;
 
   MCSection *SelectSectionForGlobal(const GlobalObject *GO, SectionKind Kind,
                                     const TargetMachine &MT) const override;

@@ -57,6 +57,8 @@ function(get_arch_and_system_from_triple triple arch_var sys_var)
     set(target_arch "nvptx")
   elseif(target_arch MATCHES "^spirv")
     set(target_arch "spirv")
+  elseif(target_arch MATCHES "^hexagon")
+    set(target_arch "hexagon")
   else()
     return()
   endif()
@@ -198,6 +200,8 @@ elseif(LIBC_TARGET_ARCHITECTURE STREQUAL "spirv")
   set(LIBC_TARGET_ARCHITECTURE_IS_SPIRV TRUE)
 elseif(LIBC_TARGET_ARCHITECTURE STREQUAL "power")
   set(LIBC_TARGET_ARCHITECTURE_IS_POWERPC TRUE)
+elseif(LIBC_TARGET_ARCHITECTURE STREQUAL "hexagon")
+  set(LIBC_TARGET_ARCHITECTURE_IS_HEXAGON TRUE)
 else()
   message(FATAL_ERROR
     "Unsupported libc target architecture ${LIBC_TARGET_ARCHITECTURE}")
@@ -238,7 +242,7 @@ endif()
 # if the compiler is clang. If the compiler is GCC we just error out as there
 # is no equivalent of an option like --target.
 if(explicit_target_triple AND
-  (NOT (libc_compiler_triple STREQUAL explicit_target_triple)))
+    (NOT (libc_compiler_triple STREQUAL explicit_target_triple)))
   set(LIBC_CROSSBUILD TRUE)
   if(CMAKE_COMPILER_IS_GNUCXX)
     message(FATAL_ERROR

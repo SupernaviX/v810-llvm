@@ -9,8 +9,10 @@
 
 using namespace llvm;
 
-void V810TargetObjectFile::Initialize(MCContext &Ctx, const TargetMachine &TM) {
-  TargetLoweringObjectFileELF::Initialize(Ctx, TM);
+void V810TargetObjectFile::Initialize(MCContext &Ctx,
+                                      const TargetMachine &TM,
+                                      const Module &M) {
+  TargetLoweringObjectFileELF::Initialize(Ctx, TM, M);
 
   SmallDataSection =
     getContext().getELFSection(".sdata", ELF::SHT_PROGBITS,

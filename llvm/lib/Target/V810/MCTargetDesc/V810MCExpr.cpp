@@ -20,6 +20,7 @@ V810::Fixups V810MCExpr::getFixupKind(Specifier S) {
   case V810::S_V810_LO:        return V810::fixup_v810_lo;
   case V810::S_V810_HI:        return V810::fixup_v810_hi;
   case V810::S_V810_16:        return V810::fixup_v810_16;
+  case V810::S_V810_5:         return V810::fixup_v810_5;
   case V810::S_V810_SDAOFF:    return V810::fixup_v810_sdaoff;
   case V810::S_V810_9_PCREL:   return V810::fixup_v810_9_pcrel;
   case V810::S_V810_26_PCREL:  return V810::fixup_v810_26_pcrel;

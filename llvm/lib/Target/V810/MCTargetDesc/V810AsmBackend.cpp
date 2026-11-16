@@ -52,6 +52,9 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   case V810::fixup_v810_16:
     checkValueInRange<16>(Fixup, Value, Ctx);
     return Value & 0xffff;
+  case V810::fixup_v810_5:
+    checkValueInRange<5>(Fixup, Value, Ctx);
+    return Value & 0x1f;
   case V810::fixup_v810_sdaoff:
     return 0; // can't compute this here
   case V810::fixup_v810_9_pcrel:
@@ -96,6 +99,7 @@ namespace {
         { "fixup_v810_lo",       16,    16,   0 },
         { "fixup_v810_hi",       16,    16,   0 },
         { "fixup_v810_16",       16,    16,   0 },
+        { "fixup_v810_5",        0,     5,    0 },
         { "fixup_v810_sdaoff",   16,    16,   0 },
         { "fixup_v810_9_pcrel",  0,     16,   0 },
         { "fixup_v810_26_pcrel", 0,     32,   0 }

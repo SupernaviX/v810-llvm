@@ -602,6 +602,7 @@ static uint64_t resolveLoongArch(uint64_t Type, uint64_t Offset, uint64_t S,
 static bool supportsV810(uint64_t Type) {
   switch (Type) {
   case ELF::R_V810_NONE:
+  case ELF::R_V810_5:
   case ELF::R_V810_8:
   case ELF::R_V810_16:
   case ELF::R_V810_32:
@@ -625,6 +626,8 @@ static uint64_t resolveV810(uint64_t Type, uint64_t Offset, uint64_t S,
   switch (Type) {
   case ELF::R_V810_NONE:
     return LocData;
+  case ELF::R_V810_5:
+    return (S + Addend) & 0x1F;
   case ELF::R_V810_8:
     return (S + Addend) & 0xFF;
   case ELF::R_V810_16:

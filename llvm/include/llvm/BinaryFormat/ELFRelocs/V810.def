@@ -20,3 +20,4 @@ ELF_RELOC(R_V810_TDAOFF,    11)
 ELF_RELOC(R_V810_DISP8,     15)
 ELF_RELOC(R_V810_DISP16,    16)
 ELF_RELOC(R_V810_DISP32,    17)
+ELF_RELOC(R_V810_5,         18) /* this one is just here for nicer errors on manual ASM */

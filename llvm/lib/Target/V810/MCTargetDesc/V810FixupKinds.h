@@ -13,6 +13,8 @@ enum Fixups {
   fixup_v810_hi,
   // A 16-bit absolute fixup.
   fixup_v810_16,
+  // A 5-bit absolute fixup.
+  fixup_v810_5,
   // A 16-bit GP-relative fixup
   fixup_v810_sdaoff, 
   // A 9-bit PC-relative fixup.

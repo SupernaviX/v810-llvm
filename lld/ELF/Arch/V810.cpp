@@ -30,6 +30,7 @@ RelExpr V810::getRelExpr(RelType type, const Symbol &s,
   switch (type) {
   case R_V810_NONE:
     return R_NONE;
+  case R_V810_5:
   case R_V810_8:
   case R_V810_16:
   case R_V810_32:
@@ -79,6 +80,10 @@ void V810::relocate(uint8_t *loc, const Relocation &rel,
   case R_V810_DISP8:
     checkInt(ctx, loc, val, 8, rel);
     *(loc + 2) = val & 0x000000ff;
+    break;
+  case R_V810_5:
+    checkInt(ctx, loc, val, 5, rel);
+    *loc = val & 0x1f;
     break;
   case R_V810_LO:
     checkInt(ctx, loc, val, 32, rel);

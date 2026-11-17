@@ -438,8 +438,12 @@ V810AsmParser::parseMEMOperand(OperandVector &Operands) {
   if (getLexer().is(AsmToken::LBrac)) {
     EVal = MCConstantExpr::create(0, getContext());
   } else {
-    if (getParser().parseExpression(EVal, E))
+    if (parsePrimaryExpr(EVal, E))
       return ParseStatus::Failure;
+    int64_t Value;
+    if (!isa<V810MCExpr>(EVal) && !EVal->evaluateAsAbsolute(Value)) {
+      EVal = V810MCExpr::create(V810::S_V810_16, EVal, getContext());
+    }
   }
   if (getParser().parseToken(AsmToken::LBrac))
     return ParseStatus::Failure;

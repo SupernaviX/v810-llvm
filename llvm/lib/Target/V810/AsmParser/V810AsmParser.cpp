@@ -713,6 +713,10 @@ bool V810AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   // Try constant folding hi and lo
   int64_t Value;
   if (Res->evaluateAsAbsolute(Value, getStreamer().getAssemblerPtr())) {
+    if (!isInt<32>(Value) && !isUInt<32>(Value)) {
+      bool Fatal = Warning(StartLoc, "immediate out of range, must be between " + Twine(minIntN(32)) + " and " + Twine(maxUIntN(32)));
+      if (Fatal) return true;
+    }
     if (evalPseudoOp(Spec, Value)) {
       Res = MCConstantExpr::create(Value, getContext());
       return false;

@@ -3,6 +3,8 @@
 # RUN: llvm-mc -filetype=obj -triple=v810-unknown-vb %s -o - \
 # RUN:   | llvm-objdump --disassemble - | FileCheck %s
 
+    movhi hi(-21845), r0, r1
+    movea lo(-21845), r1, r1
     movhi hi(0x00100020), r0, r8
     movea lo(0x00100020), r8, r8
     movhi hi(address_ - address), r0, r9
@@ -16,6 +18,8 @@ address:
     .ascii "abcd"
 address_:
 
+# CHECK: movhi 0x0, r0, r1
+# CHECK: movea 0xaaab, r1, r1
 # CHECK: movhi 0x10, r0, r8
 # CHECK: movea 0x20, r8, r8
 # CHECK: movhi 0x0, r0, r9
@@ -24,4 +28,4 @@ address_:
 # CHECK: movea 0x3700, r10, r10
 # CHECK: movea 0x4, r0, r11
 # CHECK: in.b 0x4[r12], r13
-# CHECK: jr 0x28
+# CHECK: jr 0x30

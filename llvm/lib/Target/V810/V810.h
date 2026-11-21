@@ -78,7 +78,7 @@ namespace llvm {
   }
   inline static int64_t EvalHi(int64_t Value) {
     // if LO is negative, increment HI to compensate
-    return ((Value >> 16) & 0x0000ffff) + ((Value & 0x8000) == 0x8000);
+    return ((Value >> 16) + ((Value & 0x8000) == 0x8000)) & 0x0000ffff;
   }
 
   // Just grab the high bits, without compensating for the low sign

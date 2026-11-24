@@ -47,7 +47,11 @@ class V810AsmParser : public MCTargetAsmParser {
   ParseStatus parseJumpTargetOperand(OperandVector &Operands, V810MCExpr::Specifier S);
   ParseStatus parseCondOperand(OperandVector &Operands);
   template<unsigned N>
-  ParseStatus parseImmOperand(OperandVector &Operands);
+  ParseStatus parseImmOperand(OperandVector &Operands, int64_t Min, int64_t Max);
+  template<unsigned N>
+  ParseStatus parseUImmOperand(OperandVector &Operands);
+  template<unsigned N>
+  ParseStatus parseSImmOperand(OperandVector &Operands);
 
   ParseStatus MatchOperandParserCustomImpl(OperandVector &Operands, StringRef Mnemonic);
   ParseStatus parseOperand(OperandVector &Operands, StringRef Name);
@@ -131,8 +135,10 @@ public:
       return 0 <= CE->getValue() && CE->getValue() < 16;
     return false;
   }
-  bool isImm5() const { return isImm(); }
-  bool isImm16() const { return isImm(); }
+  bool isUImm5() const { return isImm(); }
+  bool isSImm5() const { return isImm(); }
+  bool isUImm16() const { return isImm(); }
+  bool isSImm16() const { return isImm(); }
 
   MCRegister getReg() const override {
     assert((Kind == k_Register) && "Invalid access!");
@@ -222,13 +228,25 @@ public:
     addExpr(Inst, getImm());
   }
 
-  void addImm5Operands(MCInst &Inst, unsigned N) const {
+  void addUImm5Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
 
     addExpr(Inst, getImm());
   }
 
-  void addImm16Operands(MCInst &Inst, unsigned N) const {
+  void addSImm5Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    addExpr(Inst, getImm());
+  }
+
+  void addUImm16Operands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    addExpr(Inst, getImm());
+  }
+
+  void addSImm16Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
 
     addExpr(Inst, getImm());
@@ -540,7 +558,7 @@ V810AsmParser::parseCondOperand(OperandVector &Operands) {
 // an immediate, but emitting a warning if the size is wrong
 template<unsigned N>
 ParseStatus
-V810AsmParser::parseImmOperand(OperandVector &Operands) {
+V810AsmParser::parseImmOperand(OperandVector &Operands, int64_t Min, int64_t Max) {
   SMLoc Start = getLexer().getLoc();
 
   std::unique_ptr<V810Operand> Op;
@@ -554,8 +572,8 @@ V810AsmParser::parseImmOperand(OperandVector &Operands) {
     const MCExpr *Expr = Op->getImm();
     int64_t Val;
     if (Expr->evaluateAsAbsolute(Val)) {
-      if (!isInt<N>(Val) && !isUInt<N>((uint64_t) Val)) {
-        bool Fatal = Warning(Start, "immediate out of range, must be between " + Twine(minIntN(N)) + " and " + Twine(maxUIntN(N)));
+      if (Val < Min || Val > Max) {
+        bool Fatal = Warning(Start, "immediate out of range, must be between " + Twine(Min) + " and " + Twine(Max));
         if (Fatal) return ParseStatus::Failure;
       }
     } else if (!isa<V810MCExpr>(Expr)) {
@@ -567,6 +585,18 @@ V810AsmParser::parseImmOperand(OperandVector &Operands) {
   Operands.push_back(std::move(Op));
 
   return ParseStatus::Success;
+}
+
+template<unsigned N>
+ParseStatus
+V810AsmParser::parseUImmOperand(OperandVector &Operands) {
+  return parseImmOperand<N>(Operands, 0, (int64_t)maxUIntN(N));
+}
+
+template<unsigned N>
+ParseStatus
+V810AsmParser::parseSImmOperand(OperandVector &Operands) {
+  return parseImmOperand<N>(Operands, minIntN(N), maxIntN(N));
 }
 
 // We need some slightly unusual logic to parse registers, and that seems hard to express in tablegen.

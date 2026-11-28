@@ -74,16 +74,16 @@ namespace llvm {
 
   // logic for HI and LO
   inline static int64_t EvalLo(int64_t Value) {
-    return Value & 0xffff;
+    return (int16_t) Value;
   }
   inline static int64_t EvalHi(int64_t Value) {
     // if LO is negative, increment HI to compensate
-    return ((Value >> 16) + ((Value & 0x8000) == 0x8000)) & 0x0000ffff;
+    return (int16_t) ((Value >> 16) + (Value >> 15 & 1));
   }
 
   // Just grab the high bits, without compensating for the low sign
   inline static int64_t EvalHi0(int64_t Value) {
-    return (Value >> 16) & 0xffff;
+    return (int16_t) (Value >> 16);
   }
 }
 

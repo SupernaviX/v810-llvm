@@ -590,7 +590,7 @@ V810AsmParser::parseImmOperand(OperandVector &Operands, int64_t Min, int64_t Max
 template<unsigned N>
 ParseStatus
 V810AsmParser::parseUImmOperand(OperandVector &Operands) {
-  return parseImmOperand<N>(Operands, 0, (int64_t)maxUIntN(N));
+  return parseImmOperand<N>(Operands, N == 16 ? minIntN(N) : 0, (int64_t)maxUIntN(N));
 }
 
 template<unsigned N>
